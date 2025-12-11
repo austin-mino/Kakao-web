@@ -64,7 +64,7 @@ btnLogin.onclick = async () => {
 };
 
 /* --------------------------------------------------
-    🔥 방 목록 불러오기 (기존 방 유지됨)
+    🔥 기존 방 유지 — 방 목록 불러오기
 ----------------------------------------------------- */
 async function loadRooms() {
   const res = await request('api/rooms');
@@ -126,6 +126,26 @@ async function openRoom(id, name) {
 }
 
 /* --------------------------------------------------
+  🔥 방 생성 (+ 버튼)
+----------------------------------------------------- */
+newRoomBtn.onclick = async () => {
+  const name = prompt("새 채팅방 이름을 입력하세요.");
+  if (!name || !name.trim()) return;
+
+  const res = await request('api/rooms', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name: name.trim() })
+  });
+
+  if (res.ok) {
+    loadRooms(); // 방 목록 갱신
+  } else {
+    alert("방 생성 실패");
+  }
+};
+
+/* --------------------------------------------------
   🔥 메시지 렌더링
 ----------------------------------------------------- */
 function renderMessage(m) {
@@ -147,7 +167,7 @@ function renderMessage(m) {
 }
 
 /* --------------------------------------------------
-  🔥 메시지 전송 (빈 메시지 & 중복 전송 방지)
+  🔥 메시지 전송 — 빈 메시지 / 중복 방지
 ----------------------------------------------------- */
 async function sendMessage() {
   if (!currentRoom) return alert("방을 선택하세요.");
@@ -156,7 +176,7 @@ async function sendMessage() {
   const text = rawText.trim();
   const image = imageInput.files[0];
 
-  if (!text && !image) return;   // 빈 메시지 금지
+  if (!text && !image) return; // 빈 메시지 금지
 
   const form = new FormData();
   form.append('text', text);
@@ -180,18 +200,18 @@ async function sendMessage() {
 sendBtn.onclick = sendMessage;
 
 /* --------------------------------------------------
-  ✔ Enter 키 – 중복 전송 방지
+  ✔ Enter 키 — 중복 전송 방지
 ----------------------------------------------------- */
 textInput.addEventListener("keydown", (e) => {
   if (e.key === "Enter") {
     e.preventDefault();
-    if (e.repeat) return;   // 키 홀드 중복 방지
+    if (e.repeat) return; // 길게 누르면 중복 전송 방지
     sendMessage();
   }
 });
 
 /* --------------------------------------------------
-  🔥 실시간 메시지
+  🔥 실시간 메시지 수신
 ----------------------------------------------------- */
 socket.on('new_message', ({ roomId, message }) => {
   if (roomId == currentRoom) {
@@ -227,7 +247,7 @@ function scrollBottom() {
 }
 
 /* --------------------------------------------------
-  🔥 자동 로그인 제거 (매번 로그인)
+  🔥 자동 로그인 제거
 ----------------------------------------------------- */
 loginArea.classList.remove('hidden');
 roomsPanel.classList.add('hidden');
