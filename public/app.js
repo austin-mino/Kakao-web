@@ -65,11 +65,32 @@ async function loadRooms(){
   res.rooms.forEach(r=>{
     const d = document.createElement('div');
     d.className = 'roomItem';
-    d.innerHTML = `<div><div class="name">${r.name}</div><div class="meta">#${r.id}</div></div><div></div>`;
-    d.onclick = ()=> openRoom(r.id, r.name);
+    d.dataset.id = r.id;       // 🔥 데이터 저장
+    d.dataset.name = r.name;   // 🔥 데이터 저장
+    d.innerHTML = `
+      <div>
+        <div class="name">${r.name}</div>
+        <div class="meta">#${r.id}</div>
+      </div>`;
     roomsList.appendChild(d);
   });
 }
+
+/* --------------------------------------------------
+    🔥 모바일 터치 + 클릭 모두 지원하는 이벤트 위임
+----------------------------------------------------- */
+roomsList.addEventListener("click", (e) => {
+  const item = e.target.closest(".roomItem");
+  if (!item) return;
+  openRoom(item.dataset.id, item.dataset.name);
+});
+
+roomsList.addEventListener("touchstart", (e) => {
+  const item = e.target.closest(".roomItem");
+  if (!item) return;
+  openRoom(item.dataset.id, item.dataset.name);
+});
+
 
 // open room
 async function openRoom(id, name){
@@ -95,14 +116,13 @@ function renderMessage(m){
   if(m.image){ html += `<img src="/api/image/${m.image}" alt="img" />`; }
   html += `<div class="meta">${new Date(m.ts).toLocaleTimeString()} ${m.user !== user ? ' - ' + m.user : ''}</div>`;
   div.innerHTML = html;
-  // click to mark read (if not read by user)
   div.onclick = async () => {
     await request(`api/messages/${m.id}/read`, { method:'POST' });
   };
   messagesEl.appendChild(div);
 }
 
-// send message (text + optional image)
+// send message
 sendBtn.onclick = async () => {
   if(!currentRoom) return alert('방 선택');
   const text = textInput.value.trim();
@@ -117,7 +137,6 @@ sendBtn.onclick = async () => {
   });
   const j = await res.json();
   if(j.ok){
-    // message will come by socket; but for immediate feedback:
     renderMessage(j.message);
     textInput.value = '';
     imageInput.value = '';
@@ -131,14 +150,9 @@ sendBtn.onclick = async () => {
 socket.on('new_message', ({ roomId, message }) => {
   if(roomId == currentRoom) renderMessage(message);
   scrollBottom();
-  // notification if in background
   if(document.hidden && Notification.permission === 'granted' && message.user !== user){
     new Notification(message.user, { body: message.text || '이미지', icon: '/favicon.png' });
   }
-});
-
-socket.on('message_read', ({ messageId, user: who }) => {
-  // optionally show read indicator - skipped for simplicity
 });
 
 // dark mode
@@ -146,21 +160,32 @@ darkToggle.onclick = () => {
   document.body.classList.toggle('dark');
 };
 
-// browser notifications permission
+// notification
 if("Notification" in window && Notification.permission !== 'granted') {
   Notification.requestPermission();
 }
 
-// util
-function escapeHtml(s){ if(!s) return ''; return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-function scrollBottom(){ messagesEl.scrollTop = messagesEl.scrollHeight; }
+function escapeHtml(s){
+  if(!s) return '';
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function scrollBottom(){
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+}
 
-// auto-load if logged in
+/* --------------------------------------------------
+    🔥 Enter 키로 메시지 전송
+----------------------------------------------------- */
+textInput.addEventListener("keydown", function (e) {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    sendBtn.click();
+  }
+});
+
+// auto-load
 if(token && user){
   loginArea.classList.add('hidden');
   roomsPanel.classList.remove('hidden');
   loadRooms();
 }
-
-// optional: Device enqueue UI (for adding commands to phone)
-// you can implement UI to send control commands to registered devices via /api/device/:id/queue
