@@ -1,4 +1,3 @@
-// server.js
 //------------------------------------------------------------
 //  Required Modules
 //------------------------------------------------------------
@@ -177,6 +176,34 @@ app.get('/api/rooms', (req, res) => {
 });
 
 //------------------------------------------------------------
+//  Rooms - Delete
+//------------------------------------------------------------
+app.delete('/api/rooms/:id', (req, res) => {
+  const roomId = parseInt(req.params.id);
+  if (isNaN(roomId)) return res.json({ ok: false, error: 'Invalid room ID' });
+
+  db.get(`SELECT * FROM rooms WHERE id = ?`, [roomId], (err, room) => {
+    if (err) return res.json({ ok: false, error: err.message });
+    if (!room) return res.json({ ok: false, error: '방이 존재하지 않습니다.' });
+
+    // 방 관련 메시지 삭제
+    db.run(`DELETE FROM messages WHERE room_id = ?`, [roomId], (err2) => {
+      if (err2) return res.json({ ok: false, error: err2.message });
+
+      // 방 삭제
+      db.run(`DELETE FROM rooms WHERE id = ?`, [roomId], (err3) => {
+        if (err3) return res.json({ ok: false, error: err3.message });
+
+        // Socket.io로 다른 클라이언트에게 알림
+        io.emit('room_deleted', { roomId });
+
+        return res.json({ ok: true });
+      });
+    });
+  });
+});
+
+//------------------------------------------------------------
 //  Messages - Send
 //------------------------------------------------------------
 app.post('/api/rooms/:roomId/messages', upload.single('image'), (req, res) => {
@@ -256,7 +283,7 @@ app.get('/api/image/:file', (req, res) => {
 });
 
 //------------------------------------------------------------
-//  Device Register
+//  Device APIs
 //------------------------------------------------------------
 app.post('/api/device/register', (req, res) => {
   const { id, name } = req.body || {};
@@ -269,9 +296,6 @@ app.post('/api/device/register', (req, res) => {
   );
 });
 
-//------------------------------------------------------------
-//  Device Poll Queue
-//------------------------------------------------------------
 app.get('/api/device/poll', (req, res) => {
   const id = req.query.id;
   if (!id) return res.json({ ok: false });
@@ -289,9 +313,6 @@ app.get('/api/device/poll', (req, res) => {
   });
 });
 
-//------------------------------------------------------------
-//  Device - Add Command
-//------------------------------------------------------------
 app.post('/api/device/:id/queue', (req, res) => {
   const id = req.params.id;
   const cmd = req.body;
@@ -313,14 +334,9 @@ app.post('/api/device/:id/queue', (req, res) => {
     });
 });
 
-//------------------------------------------------------------
-//  Device - Report (for external message injection)
-//------------------------------------------------------------
 app.post('/api/device/report', (req, res) => {
   const { type, payload } = req.body || {};
-
-  if (type !== 'received')
-    return res.json({ ok: true });
+  if (type !== 'received') return res.json({ ok: true });
 
   const { roomId, user, text, image } = payload || {};
   const ts = Date.now();
@@ -344,15 +360,8 @@ app.post('/api/device/report', (req, res) => {
 //  Socket.IO
 //------------------------------------------------------------
 io.on('connection', (socket) => {
-
-  socket.on('join_room', (roomId) => {
-    socket.join('room_' + roomId);
-  });
-
-  socket.on('leave_room', (roomId) => {
-    socket.leave('room_' + roomId);
-  });
-
+  socket.on('join_room', (roomId) => socket.join('room_' + roomId));
+  socket.on('leave_room', (roomId) => socket.leave('room_' + roomId));
 });
 
 //------------------------------------------------------------
