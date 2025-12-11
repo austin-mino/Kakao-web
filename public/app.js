@@ -115,7 +115,7 @@ if (token && user) {
 }
 
 /* --------------------------------------------------
-   🔥 방 목록 불러오기
+   🔥 방 목록 불러오기 + 삭제 버튼 추가
 ----------------------------------------------------- */
 async function loadRooms() {
   const res = await request("api/rooms");
@@ -129,11 +129,25 @@ async function loadRooms() {
     item.dataset.name = r.name;
 
     item.innerHTML = `
-      <div>
+      <div class="roomInfo">
         <div class="name">${escapeHtml(r.name)}</div>
         <div class="meta">#${r.id}</div>
       </div>
+      <button class="deleteRoomBtn">삭제</button>
     `;
+
+    // 삭제 버튼 클릭
+    item.querySelector(".deleteRoomBtn").addEventListener("click", async (e) => {
+      e.stopPropagation(); // 방 선택 이벤트 방지
+      if (!confirm(`방 "${r.name}"을 삭제하시겠습니까?`)) return;
+
+      const delRes = await request(`api/rooms/${r.id}`, { method: "DELETE" });
+      if (delRes.ok) {
+        item.remove();
+      } else {
+        alert(delRes.error || "방 삭제 실패");
+      }
+    });
 
     roomsList.appendChild(item);
   });
@@ -194,7 +208,7 @@ newRoomBtn.onclick = async () => {
 };
 
 /* --------------------------------------------------
-  🔥 메시지 렌더링 (중복 방지)
+  🔥 메시지 렌더링 (카톡풍)
 ----------------------------------------------------- */
 const renderCache = new Set();
 
@@ -209,10 +223,11 @@ function renderMessage(m) {
   if (m.text) html += `<div class="text">${escapeHtml(m.text)}</div>`;
   if (m.image) html += `<img src="/api/image/${m.image}" />`;
 
-  html += `<div class="meta">${new Date(m.ts).toLocaleTimeString()} - ${m.user}</div>`;
+  html += `<div class="meta">${new Date(m.ts).toLocaleTimeString()}</div>`;
   div.innerHTML = html;
 
   messagesEl.appendChild(div);
+  scrollBottom();
 }
 
 /* --------------------------------------------------
