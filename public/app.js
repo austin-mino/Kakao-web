@@ -3,13 +3,14 @@ let token = localStorage.getItem("token") || null;
 let user = localStorage.getItem("user") || null;
 
 const socket = io();
-
 const el = id => document.getElementById(id);
 
 // UI refs
 const loginArea = el('loginArea');
-const nicknameInput = el('nickname');
+const usernameInput = el('username');
+const passwordInput = el('password');
 const btnLogin = el('btnLogin');
+const btnRegister = el('btnRegister');
 
 const roomsPanel = el('roomsPanel');
 const roomsList = el('roomsList');
@@ -34,12 +35,13 @@ function setAuth(t, u) {
   token = t;
   user = u;
 
-  // 저장
   localStorage.setItem("token", t);
   localStorage.setItem("user", u);
 
   loginArea.classList.add('hidden');
   roomsPanel.classList.remove('hidden');
+
+  loadRooms();
 }
 
 function logout() {
@@ -52,32 +54,59 @@ function logout() {
   roomsPanel.classList.add('hidden');
 }
 
+/* 서버 요청 도우미 */
 function request(path, opts = {}) {
   opts.headers = opts.headers || {};
-  if (token) opts.headers['Authorization'] = 'Bearer ' + token;
-  return fetch('/' + path.replace(/^\//, ''), opts).then(r => r.json());
+  if (token) {
+    opts.headers["Authorization"] = "Bearer " + token;
+  }
+  return fetch("/" + path.replace(/^\//, ''), opts).then(res => res.json());
 }
 
+/* --------------------------------------------------
+   🔑 로그인 버튼
+----------------------------------------------------- */
 btnLogin.onclick = async () => {
-  const nickname = nicknameInput.value.trim();
-  if (!nickname) return alert('닉네임 또는 ID를 입력하세요.');
+  const username = usernameInput.value.trim();
+  const password = passwordInput.value.trim();
+  if (!username || !password) return alert("아이디와 비밀번호를 입력하세요.");
 
-  const res = await request('api/login', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ nickname })
+  const res = await request("api/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, password })
   });
 
   if (res.ok) {
-    setAuth(res.token, res.user);
-    loadRooms();
+    setAuth(res.token, res.username);
   } else {
-    alert(res.error || '로그인 실패');
+    alert(res.error || "로그인 실패");
   }
 };
 
 /* --------------------------------------------------
-    🔥 자동 로그인
+   🆕 회원가입 버튼
+----------------------------------------------------- */
+btnRegister.onclick = async () => {
+  const username = usernameInput.value.trim();
+  const password = passwordInput.value.trim();
+  if (!username || !password) return alert("아이디와 비밀번호를 입력하세요.");
+
+  const res = await request("api/register", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, password })
+  });
+
+  if (res.ok) {
+    alert("회원가입 성공! 이제 로그인하세요.");
+  } else {
+    alert(res.error || "회원가입 실패");
+  }
+};
+
+/* --------------------------------------------------
+   🔥 자동 로그인
 ----------------------------------------------------- */
 if (token && user) {
   loginArea.classList.add('hidden');
@@ -86,40 +115,42 @@ if (token && user) {
 }
 
 /* --------------------------------------------------
-    🔥 방 목록 불러오기
+   🔥 방 목록 불러오기
 ----------------------------------------------------- */
 async function loadRooms() {
-  const res = await request('api/rooms');
-  roomsList.innerHTML = '';
+  const res = await request("api/rooms");
+  roomsList.innerHTML = "";
   if (!res.ok) return;
 
   res.rooms.forEach(r => {
-    const d = document.createElement('div');
-    d.className = 'roomItem';
-    d.dataset.id = r.id;
-    d.dataset.name = r.name;
+    const item = document.createElement("div");
+    item.className = "roomItem";
+    item.dataset.id = r.id;
+    item.dataset.name = r.name;
 
-    d.innerHTML = `
+    item.innerHTML = `
       <div>
         <div class="name">${escapeHtml(r.name)}</div>
         <div class="meta">#${r.id}</div>
       </div>
     `;
-    roomsList.appendChild(d);
+
+    roomsList.appendChild(item);
   });
 }
 
 /* --------------------------------------------------
-  🔥 모바일 터치 + 클릭 중복 방지
+  🔥 모바일 터치 중복 방지
 ----------------------------------------------------- */
 let roomOpening = false;
-
-roomsList.addEventListener("click", (e) => {
+roomsList.addEventListener("click", async (e) => {
   if (roomOpening) return;
+
   const item = e.target.closest(".roomItem");
   if (!item) return;
 
   roomOpening = true;
+
   openRoom(item.dataset.id, item.dataset.name)
     .finally(() => (roomOpening = false));
 });
@@ -131,14 +162,15 @@ async function openRoom(id, name) {
   currentRoom = id;
   roomNameEl.textContent = name;
 
-  chatHeader.classList.remove('hidden');
-  compose.classList.remove('hidden');
-  messagesEl.innerHTML = '';
+  chatHeader.classList.remove("hidden");
+  compose.classList.remove("hidden");
+  messagesEl.innerHTML = "";
 
-  socket.emit('join_room', id);
+  socket.emit("join_room", id);
 
   const res = await request(`api/rooms/${id}/messages`);
   if (res.ok) {
+    renderCache.clear();
     res.messages.forEach(m => renderMessage(m));
     scrollBottom();
   }
@@ -151,92 +183,81 @@ newRoomBtn.onclick = async () => {
   const name = prompt("새 채팅방 이름을 입력하세요.");
   if (!name || !name.trim()) return;
 
-  const res = await request('api/rooms', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name: name.trim() })
+  const res = await request("api/rooms", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name })
   });
 
-  if (res.ok) {
-    loadRooms();
-  } else {
-    alert(res.error || "방 생성 실패");
-  }
+  if (res.ok) loadRooms();
+  else alert(res.error || "방 생성 실패");
 };
 
 /* --------------------------------------------------
-  🔥 메시지 렌더링 — 중복 방지
+  🔥 메시지 렌더링 (중복 방지)
 ----------------------------------------------------- */
-const renderCache = new Set(); // 메시지 ID 저장
+const renderCache = new Set();
 
 function renderMessage(m) {
   if (renderCache.has(m.id)) return;
   renderCache.add(m.id);
 
-  const div = document.createElement('div');
-  div.className = 'msg bubble ' + (m.user === user ? 'me' : 'other');
+  const div = document.createElement("div");
+  div.className = "msg bubble " + (m.user === user ? "me" : "other");
 
-  let html = '';
+  let html = "";
   if (m.text) html += `<div class="text">${escapeHtml(m.text)}</div>`;
-  if (m.image) html += `<img src="/api/image/${m.image}" alt="">`;
+  if (m.image) html += `<img src="/api/image/${m.image}" />`;
 
-  html += `<div class="meta">${new Date(m.ts).toLocaleTimeString()}${m.user !== user ? ' - ' + m.user : ''}</div>`;
+  html += `<div class="meta">${new Date(m.ts).toLocaleTimeString()} - ${m.user}</div>`;
   div.innerHTML = html;
-
-  div.onclick = async () => {
-    await request(`api/messages/${m.id}/read`, { method:'POST' });
-  };
 
   messagesEl.appendChild(div);
 }
 
 /* --------------------------------------------------
-  🔥 메시지 전송 — 빈 메시지 금지
+  🔥 메시지 전송
 ----------------------------------------------------- */
 async function sendMessage() {
   if (!currentRoom) return alert("방을 선택하세요.");
 
-  const rawText = textInput.value;
-  const text = rawText.trim();
+  const text = textInput.value.trim();
   const image = imageInput.files[0];
 
-  if (!text && !image) return; // 빈 메시지 금지
+  if (!text && !image) return;
 
   const form = new FormData();
-  form.append('text', text);
-  if (image) form.append('image', image);
+  form.append("text", text);
+  if (image) form.append("image", image);
 
   const res = await fetch(`/api/rooms/${currentRoom}/messages`, {
-    method: 'POST',
-    headers: token ? { 'Authorization': 'Bearer ' + token } : {},
+    method: "POST",
+    headers: token ? { "Authorization": "Bearer " + token } : {},
     body: form
   });
 
   const j = await res.json();
   if (j.ok) {
-    textInput.value = '';
-    imageInput.value = '';
+    textInput.value = "";
+    imageInput.value = "";
     scrollBottom();
   }
 }
 
 sendBtn.onclick = sendMessage;
 
-/* --------------------------------------------------
-  ✔ Enter 키 — 중복 전송 방지
------------------------------------------------------ */
+/* Enter 키 전송 */
 textInput.addEventListener("keydown", (e) => {
   if (e.key === "Enter") {
     e.preventDefault();
-    if (e.repeat) return;
-    sendMessage();
+    if (!e.repeat) sendMessage();
   }
 });
 
 /* --------------------------------------------------
   🔥 실시간 메시지 수신
 ----------------------------------------------------- */
-socket.on('new_message', ({ roomId, message }) => {
+socket.on("new_message", ({ roomId, message }) => {
   if (roomId == currentRoom) {
     renderMessage(message);
     scrollBottom();
@@ -244,25 +265,25 @@ socket.on('new_message', ({ roomId, message }) => {
 });
 
 /* --------------------------------------------------
-  🔥 다크 모드
+  🔥 다크모드
 ----------------------------------------------------- */
 darkToggle.onclick = () => {
-  document.body.classList.toggle('dark');
+  document.body.classList.toggle("dark");
 };
 
 /* --------------------------------------------------
-  helpers
+  Helpers
 ----------------------------------------------------- */
 function escapeHtml(s) {
   return s
-    ? s.replace(/[&<>"']/g, (c) => ({
+    ? s.replace(/[&<>"']/g, c => ({
         "&": "&amp;",
         "<": "&lt;",
         ">": "&gt;",
         '"': "&quot;",
         "'": "&#39;"
       }[c]))
-    : '';
+    : "";
 }
 
 function scrollBottom() {
