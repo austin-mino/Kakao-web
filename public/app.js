@@ -1,7 +1,6 @@
-// public/app.js
 const API = '';
-let token = null;           // 🔥 항상 null → 매번 로그인 강제
-let user = null;
+let token = localStorage.getItem("token") || null;
+let user = localStorage.getItem("user") || null;
 
 const socket = io();
 
@@ -29,14 +28,28 @@ const sendBtn = el('sendBtn');
 let currentRoom = null;
 
 /* --------------------------------------------------
-      🔐 로그인 – localStorage 무시, 매번 로그인
+      🔐 로그인 처리
 ----------------------------------------------------- */
 function setAuth(t, u) {
   token = t;
   user = u;
 
+  // 저장
+  localStorage.setItem("token", t);
+  localStorage.setItem("user", u);
+
   loginArea.classList.add('hidden');
   roomsPanel.classList.remove('hidden');
+}
+
+function logout() {
+  localStorage.removeItem("token");
+  localStorage.removeItem("user");
+  token = null;
+  user = null;
+
+  loginArea.classList.remove('hidden');
+  roomsPanel.classList.add('hidden');
 }
 
 function request(path, opts = {}) {
@@ -47,7 +60,7 @@ function request(path, opts = {}) {
 
 btnLogin.onclick = async () => {
   const nickname = nicknameInput.value.trim();
-  if (!nickname) return alert('닉네임을 입력하세요.');
+  if (!nickname) return alert('닉네임 또는 ID를 입력하세요.');
 
   const res = await request('api/login', {
     method: 'POST',
@@ -59,12 +72,21 @@ btnLogin.onclick = async () => {
     setAuth(res.token, res.user);
     loadRooms();
   } else {
-    alert('로그인 실패');
+    alert(res.error || '로그인 실패');
   }
 };
 
 /* --------------------------------------------------
-    🔥 기존 방 유지 — 방 목록 불러오기
+    🔥 자동 로그인
+----------------------------------------------------- */
+if (token && user) {
+  loginArea.classList.add('hidden');
+  roomsPanel.classList.remove('hidden');
+  loadRooms();
+}
+
+/* --------------------------------------------------
+    🔥 방 목록 불러오기
 ----------------------------------------------------- */
 async function loadRooms() {
   const res = await request('api/rooms');
@@ -92,18 +114,15 @@ async function loadRooms() {
 ----------------------------------------------------- */
 let roomOpening = false;
 
-function handleRoomOpen(e) {
+roomsList.addEventListener("click", (e) => {
   if (roomOpening) return;
-  const item = e.target.closest('.roomItem');
+  const item = e.target.closest(".roomItem");
   if (!item) return;
 
   roomOpening = true;
   openRoom(item.dataset.id, item.dataset.name)
-    .finally(() => roomOpening = false);
-}
-
-roomsList.addEventListener("click", handleRoomOpen);
-roomsList.addEventListener("touchend", handleRoomOpen);
+    .finally(() => (roomOpening = false));
+});
 
 /* --------------------------------------------------
   🔥 방 열기
@@ -126,7 +145,7 @@ async function openRoom(id, name) {
 }
 
 /* --------------------------------------------------
-  🔥 방 생성 (+ 버튼)
+  🔥 방 생성
 ----------------------------------------------------- */
 newRoomBtn.onclick = async () => {
   const name = prompt("새 채팅방 이름을 입력하세요.");
@@ -139,16 +158,21 @@ newRoomBtn.onclick = async () => {
   });
 
   if (res.ok) {
-    loadRooms(); // 방 목록 갱신
+    loadRooms();
   } else {
-    alert("방 생성 실패");
+    alert(res.error || "방 생성 실패");
   }
 };
 
 /* --------------------------------------------------
-  🔥 메시지 렌더링
+  🔥 메시지 렌더링 — 중복 방지
 ----------------------------------------------------- */
+const renderCache = new Set(); // 메시지 ID 저장
+
 function renderMessage(m) {
+  if (renderCache.has(m.id)) return;
+  renderCache.add(m.id);
+
   const div = document.createElement('div');
   div.className = 'msg bubble ' + (m.user === user ? 'me' : 'other');
 
@@ -167,7 +191,7 @@ function renderMessage(m) {
 }
 
 /* --------------------------------------------------
-  🔥 메시지 전송 — 빈 메시지 / 중복 방지
+  🔥 메시지 전송 — 빈 메시지 금지
 ----------------------------------------------------- */
 async function sendMessage() {
   if (!currentRoom) return alert("방을 선택하세요.");
@@ -204,7 +228,7 @@ sendBtn.onclick = sendMessage;
 textInput.addEventListener("keydown", (e) => {
   if (e.key === "Enter") {
     e.preventDefault();
-    if (e.repeat) return; // 길게 누르면 중복 전송 방지
+    if (e.repeat) return;
     sendMessage();
   }
 });
@@ -244,9 +268,3 @@ function escapeHtml(s) {
 function scrollBottom() {
   messagesEl.scrollTop = messagesEl.scrollHeight;
 }
-
-/* --------------------------------------------------
-  🔥 자동 로그인 제거
------------------------------------------------------ */
-loginArea.classList.remove('hidden');
-roomsPanel.classList.add('hidden');
