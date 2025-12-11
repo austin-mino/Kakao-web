@@ -190,7 +190,6 @@ async function sendMessage() {
 
   const j = await res.json();
   if (j.ok) {
-    renderMessage(j.message);
     textInput.value = '';
     imageInput.value = '';
     scrollBottom();
