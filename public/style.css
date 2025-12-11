@@ -146,22 +146,22 @@ body {
   border-radius:16px;
   margin-bottom:10px;
   box-shadow:0 1px 3px rgba(0,0,0,0.06);
-  display:inline-block; /* bubble 내부 정렬 문제 해결 */
+  display:inline-block;
 }
 
-/* 내가 보낸 메시지 — 오른쪽 정렬 */
+/* 내가 보낸 메시지 — 오른쪽 노란색 */
 .msg.me {
-  margin-left:auto;
-  background: var(--accent);
+  margin-left:auto;           /* 오른쪽 정렬 */
+  background: var(--accent);  /* 노란색 */
   color: #000;
   border-bottom-right-radius:6px;
   text-align: right;
 }
 
-/* 상대방 메시지 — 왼쪽 정렬 */
+/* 상대 메시지 — 왼쪽 흰색 */
 .msg.other {
-  margin-right:auto;
-  background:#fff;
+  margin-right:auto;          /* 왼쪽 정렬 */
+  background:#fff;            /* 흰색 */
   color:#000;
   border-bottom-left-radius:6px;
   text-align:left;
@@ -174,7 +174,7 @@ body {
   margin-top:6px;
 }
 
-/* 이미지 */
+/* 메시지 이미지 */
 .msg img{
   max-width:200px;
   border-radius:8px;
@@ -182,7 +182,7 @@ body {
   margin-top:6px;
 }
 
-/* 오른쪽/왼쪽 메시지 이미지 정렬 */
+/* 이미지 정렬 */
 .msg.me img {
   margin-left:auto;
 }
