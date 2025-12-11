@@ -57,9 +57,7 @@ function logout() {
 /* 서버 요청 도우미 */
 function request(path, opts = {}) {
   opts.headers = opts.headers || {};
-  if (token) {
-    opts.headers["Authorization"] = "Bearer " + token;
-  }
+  if (token) opts.headers["Authorization"] = "Bearer " + token;
   return fetch("/" + path.replace(/^\//, ''), opts).then(res => res.json());
 }
 
@@ -78,7 +76,8 @@ btnLogin.onclick = async () => {
   });
 
   if (res.ok) {
-    setAuth(res.token, res.username);
+    // 서버에서 user 대신 username을 보낸 경우
+    setAuth(res.token, res.user || res.username);
   } else {
     alert(res.error || "로그인 실패");
   }
@@ -115,7 +114,7 @@ if (token && user) {
 }
 
 /* --------------------------------------------------
-   🔥 방 목록 불러오기 + 삭제 버튼 추가
+   🔥 방 목록 불러오기 + 삭제 버튼
 ----------------------------------------------------- */
 async function loadRooms() {
   const res = await request("api/rooms");
@@ -138,15 +137,12 @@ async function loadRooms() {
 
     // 삭제 버튼 클릭
     item.querySelector(".deleteRoomBtn").addEventListener("click", async (e) => {
-      e.stopPropagation(); // 방 선택 이벤트 방지
+      e.stopPropagation();
       if (!confirm(`방 "${r.name}"을 삭제하시겠습니까?`)) return;
 
       const delRes = await request(`api/rooms/${r.id}`, { method: "DELETE" });
-      if (delRes.ok) {
-        item.remove();
-      } else {
-        alert(delRes.error || "방 삭제 실패");
-      }
+      if (delRes.ok) item.remove();
+      else alert(delRes.error || "방 삭제 실패");
     });
 
     roomsList.appendChild(item);
@@ -154,7 +150,7 @@ async function loadRooms() {
 }
 
 /* --------------------------------------------------
-  🔥 모바일 터치 중복 방지
+  🔥 방 클릭
 ----------------------------------------------------- */
 let roomOpening = false;
 roomsList.addEventListener("click", async (e) => {
@@ -208,7 +204,7 @@ newRoomBtn.onclick = async () => {
 };
 
 /* --------------------------------------------------
-  🔥 메시지 렌더링 (카톡풍)
+  🔥 메시지 렌더링 (카톡풍, 색상 구분)
 ----------------------------------------------------- */
 const renderCache = new Set();
 
@@ -255,36 +251,25 @@ async function sendMessage() {
   if (j.ok) {
     textInput.value = "";
     imageInput.value = "";
-    scrollBottom();
   }
 }
 
 sendBtn.onclick = sendMessage;
-
-/* Enter 키 전송 */
-textInput.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") {
-    e.preventDefault();
-    if (!e.repeat) sendMessage();
-  }
+textInput.addEventListener("keydown", e => {
+  if (e.key === "Enter") { e.preventDefault(); if (!e.repeat) sendMessage(); }
 });
 
 /* --------------------------------------------------
   🔥 실시간 메시지 수신
 ----------------------------------------------------- */
 socket.on("new_message", ({ roomId, message }) => {
-  if (roomId == currentRoom) {
-    renderMessage(message);
-    scrollBottom();
-  }
+  if (roomId == currentRoom) renderMessage(message);
 });
 
 /* --------------------------------------------------
   🔥 다크모드
 ----------------------------------------------------- */
-darkToggle.onclick = () => {
-  document.body.classList.toggle("dark");
-};
+darkToggle.onclick = () => document.body.classList.toggle("dark");
 
 /* --------------------------------------------------
   Helpers
