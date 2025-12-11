@@ -1,4 +1,3 @@
-<!-- public/index.html -->
 <!doctype html>
 <html lang="ko">
 <head>
@@ -6,6 +5,13 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Kakao-Web</title>
 <link rel="stylesheet" href="/style.css" />
+
+<style>
+  /* 모바일 터치가 버튼에 정상 전달되도록 */
+  button {
+    touch-action: manipulation;
+  }
+</style>
 </head>
 <body>
   <div id="app">
@@ -16,14 +22,15 @@
       </div>
 
       <div id="loginArea" class="panel">
-        <input id="nickname" placeholder="닉네임 입력" />
-        <button id="btnLogin">로그인</button>
+        <input id="nickname" placeholder="닉네임 입력" autocomplete="off" />
+        <button id="btnLogin" type="button">로그인</button>
       </div>
 
       <div id="roomsPanel" class="panel hidden">
         <div class="panel-header">
           <span>채팅방</span>
-          <button id="newRoomBtn">+</button>
+          <!-- type="button" 추가 -->
+          <button id="newRoomBtn" type="button">+</button>
         </div>
         <div id="roomsList"></div>
       </div>
@@ -32,15 +39,17 @@
     <main id="main">
       <div id="chatHeader" class="hidden">
         <div id="roomName">Room</div>
-        <div id="darkToggle">🌙</div>
+        <div id="darkToggle" type="button">🌙</div>
       </div>
 
       <div id="messages"></div>
 
       <div id="compose" class="hidden">
-        <input id="textInput" placeholder="메시지 입력..." />
+        <!-- Enter 전송 잘 되도록 autocomplete 제거 -->
+        <input id="textInput" placeholder="메시지 입력..." autocomplete="off" />
         <input id="imageInput" type="file" accept="image/*" />
-        <button id="sendBtn">전송</button>
+        <!-- type="button" 추가 -->
+        <button id="sendBtn" type="button">전송</button>
       </div>
     </main>
   </div>
