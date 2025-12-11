@@ -7,7 +7,6 @@
 <link rel="stylesheet" href="/style.css" />
 
 <style>
-  /* 모바일 터치 오류 방지 */
   button {
     touch-action: manipulation;
   }
@@ -21,10 +20,15 @@
         <div class="title">Kakao-Web</div>
       </div>
 
-      <!-- 로그인 영역 -->
+      <!-- 로그인/회원가입 영역 -->
       <div id="loginArea" class="panel">
-        <input id="nickname" placeholder="닉네임 입력" autocomplete="off" />
+        <h3>로그인</h3>
+
+        <input id="username" placeholder="아이디 입력" autocomplete="off" />
+        <input id="password" type="password" placeholder="비밀번호 입력" autocomplete="off" />
+
         <button id="btnLogin" type="button">로그인</button>
+        <button id="btnRegister" type="button" style="margin-top:5px;">회원가입</button>
       </div>
 
       <!-- 방 리스트 -->
