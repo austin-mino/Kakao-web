@@ -146,13 +146,14 @@ body {
 
 /* ----- MESSAGE BUBBLES ----- */
 .bubble {
-  max-width:70%;
-  padding:10px 14px;
-  border-radius:16px;
-  box-shadow:0 1px 3px rgba(0,0,0,0.06);
-  display:block;
+  max-width: 70%;
+  padding: 10px 14px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
   word-wrap: break-word;
+  word-break: break-all; /* 긴 단어도 줄바꿈 되도록 설정 */
   animation: fade-in 0.2s ease;
+  font-size: 14px;
+  line-height: 1.4;
 }
 
 @keyframes fade-in {
@@ -160,60 +161,74 @@ body {
   to { opacity:1; transform: translateY(0); }
 }
 
-/* 내가 보낸 메시지 */
+/* 내가 보낸 메시지 (오른쪽 배치) */
 .msg.me {
-  display:flex;
-  flex-direction:column;
-  align-items:flex-end;
-  margin-left:auto;
+  /* 배치 핵심 로직 */
+  margin-left: auto; /* 왼쪽 여백을 최대로 -> 오른쪽으로 밀림 */
+  margin-right: 0;
+  
+  /* 내부 정렬 */
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end; /* 내부 텍스트 및 메타정보 우측 정렬 */
+  
+  /* 스타일 */
   background: var(--accent);
-  color:#000;
-  border-bottom-right-radius:6px;
-  gap:6px;
-  padding:8px 12px;
-  word-wrap: break-word;
+  color: #000;
+  
+  /* 말풍선 모양: 오른쪽 상단을 뾰족하게 */
+  border-radius: 16px;
+  border-top-right-radius: 2px;
+  
+  gap: 4px;
   transition: all 0.2s ease;
 }
 
-/* 상대 메시지 */
+/* 상대 메시지 (왼쪽 배치) */
 .msg.other {
-  display:flex;
-  flex-direction:column;
-  align-items:flex-start;
-  margin-right:auto;
-  background:#fff;
-  color:#000;
-  border-bottom-left-radius:6px;
-  gap:6px;
-  padding:8px 12px;
-  word-wrap: break-word;
+  /* 배치 핵심 로직 */
+  margin-right: auto; /* 오른쪽 여백을 최대로 -> 왼쪽으로 밀림 */
+  margin-left: 0;
+  
+  /* 내부 정렬 */
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start; /* 내부 텍스트 및 메타정보 좌측 정렬 */
+  
+  /* 스타일 */
+  background: #fff;
+  color: #000;
+  
+  /* 말풍선 모양: 왼쪽 상단을 뾰족하게 */
+  border-radius: 16px;
+  border-top-left-radius: 2px;
+  
+  gap: 4px;
   transition: all 0.2s ease;
 }
 
-/* 메시지 메타 정보 */
+/* 메시지 메타 정보 (시간 등) */
 .msg .meta {
-  font-size:11px;
-  color:#666;
+  font-size: 11px;
+  color: #666;
+  margin-top: 2px;
+  opacity: 0.8;
 }
 
 /* 메시지 이미지 */
 .msg img {
-  max-width:50%;
-  border-radius:8px;
-  display:block;
+  max-width: 100%;
+  border-radius: 12px;
+  display: block;
+  margin-bottom: 4px;
 }
-
-/* 이미지 정렬 */
-.msg.me img { margin-left:auto; }
-.msg.other img { margin-right:auto; }
 
 /* 하이퍼링크 */
 .msg a {
-  color:var(--link);
-  text-decoration:underline;
-  word-break: break-word;
+  color: var(--link);
+  text-decoration: underline;
+  word-break: break-all;
 }
-
 /* ----- MESSAGE COMPOSE AREA ----- */
 #compose{
   display:flex;
