@@ -340,7 +340,7 @@ socket.on("new_message", ({ roomId, message }) => {
   }
 });
 
-if (darkToggle) darkToggle.onclick = () => document.body.classList.toggle("dark");
+if (darkToggle) darkToggle.onclick = () => document.documentElement.classList.toggle("dark");
 
 function escapeHtml(s) {
   return s ? s.replace(/[&<>"']/g, c => ({
