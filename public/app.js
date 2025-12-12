@@ -186,9 +186,14 @@ newRoomBtn.onclick = async () => {
 };
 
 /* --------------------------------------------------
-  🔥 메시지 렌더링 (중복 방지)
+  🔥 메시지 렌더링 (중복 방지 + 링크 자동 변환)
 ----------------------------------------------------- */
 const renderCache = new Set();
+
+function linkify(text) {
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  return text.replace(urlRegex, url => `<a href="${url}" target="_blank">${url}</a>`);
+}
 
 function renderMessage(m) {
   if (renderCache.has(m.id)) return;
@@ -198,13 +203,14 @@ function renderMessage(m) {
   div.className = "msg bubble " + (m.user === user ? "me" : "other");
 
   let html = "";
-  if (m.text) html += `<div class="text">${escapeHtml(m.text)}</div>`;
+  if (m.text) html += `<div class="text">${linkify(escapeHtml(m.text))}</div>`;
   if (m.image) html += `<img src="/api/image/${m.image}" />`;
 
   html += `<div class="meta">${new Date(m.ts).toLocaleTimeString()} - ${m.user}</div>`;
   div.innerHTML = html;
 
   messagesEl.appendChild(div);
+  scrollBottom();
 }
 
 /* --------------------------------------------------
@@ -232,7 +238,6 @@ async function sendMessage() {
   if (j.ok) {
     textInput.value = "";
     imageInput.value = "";
-    scrollBottom();
   }
 }
 
@@ -252,7 +257,6 @@ textInput.addEventListener("keydown", (e) => {
 socket.on("new_message", ({ roomId, message }) => {
   if (roomId == currentRoom) {
     renderMessage(message);
-    scrollBottom();
   }
 });
 
