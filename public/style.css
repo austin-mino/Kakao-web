@@ -1,55 +1,57 @@
 :root {
-  /* [라이트 모드] */
-  --bg-main: #ffffff;       /* 메인 배경 */
-  --bg-panel: #f7f7f7;      /* 사이드바 배경 */
+  /* [라이트 모드 변수] */
+  --bg-main: #ffffff;       /* 전체 배경 */
+  --bg-panel: #f8f8f8;      /* 사이드바 배경 */
   --bg-input: #ffffff;      /* 입력창 배경 */
-  --bg-room: #ffffff;       /* 방 목록 배경 */
-  --bg-room-hover: #f0f0f0; /* 방 목록 호버 */
   
-  --text-main: #000000;     /* 기본 글씨 */
-  --text-sub: #666666;      /* 보조 글씨 */
-  --text-inv: #ffffff;      /* 반전 글씨 */
+  --text-main: #000000;     /* 기본 글씨: 검정 */
+  --text-sub: #666666;      /* 보조 글씨: 회색 */
   
-  --border: #dddddd;        /* 테두리 */
-  --input-border: #cccccc;  /* 입력창 테두리 */
+  --border: #e0e0e0;        /* 테두리 색상 */
+  --input-border: #cccccc;  /* 입력창 테두리 (진하게) */
+  
+  --room-bg: #ffffff;       /* 방 목록 배경 */
+  --room-hover: #f0f0f0;    /* 방 목록 호버 */
   
   --bubble-me: #000000;     /* 내 말풍선: 검정 */
-  --text-me: #ffffff;       /* 내 말풍선 글씨 */
+  --text-me: #ffffff;       /* 내 글씨: 흰색 */
   
-  --bubble-other: #eeeeee;  /* 상대 말풍선 */
-  --text-other: #000000;    /* 상대 말풍선 글씨 */
+  --bubble-other: #f2f2f2;  /* 상대 말풍선: 연회색 */
+  --text-other: #000000;    /* 상대 글씨: 검정 */
   
-  --btn-bg: #000000;        /* 버튼/플러스 배경: 검정 */
-  --btn-text: #ffffff;      /* 버튼/플러스 글씨: 흰색 */
+  /* [핵심] 버튼 색상 (검정) */
+  --btn-bg: #000000;        
+  --btn-text: #ffffff;      
 }
 
-/* [다크 모드] */
+/* [다크 모드 변수 - 고대비 적용] */
 html.dark {
-  --bg-main: #121212;       /* 메인 배경 */
-  --bg-panel: #000000;      /* 사이드바 배경 */
-  --bg-input: #2a2a2a;      /* 입력창 배경 */
-  --bg-room: #1e1e1e;       /* 방 목록 배경 */
-  --bg-room-hover: #333333; /* 방 목록 호버 */
+  --bg-main: #000000;       /* 전체 배경: 완전 검정 */
+  --bg-panel: #111111;      /* 사이드바: 아주 어두운 회색 */
+  --bg-input: #222222;      /* 입력창: 어두운 회색 */
   
-  --text-main: #ffffff;     /* 기본 글씨 */
+  --text-main: #ffffff;     /* 기본 글씨: 흰색 */
   --text-sub: #aaaaaa;      /* 보조 글씨 */
-  --text-inv: #000000;      /* 반전 글씨 */
   
   --border: #333333;        /* 테두리 */
-  --input-border: #444444;  /* 입력창 테두리 */
+  --input-border: #555555;  /* 입력창 테두리 (밝게) */
   
-  --bubble-me: #ffffff;     /* 내 말풍선: 흰색 */
-  --text-me: #000000;       /* 내 말풍선 글씨 */
+  --room-bg: #1a1a1a;       /* 방 목록 배경 */
+  --room-hover: #333333;    /* 방 목록 호버 */
+  
+  --bubble-me: #ffffff;     /* 내 말풍선: 흰색 (반전 포인트) */
+  --text-me: #000000;       /* 내 글씨: 검정 */
   
   --bubble-other: #222222;  /* 상대 말풍선 */
-  --text-other: #ffffff;    /* 상대 말풍선 글씨 */
+  --text-other: #ffffff;    /* 상대 글씨 */
   
-  --btn-bg: #ffffff;        /* 버튼/플러스 배경: 흰색 (반전됨) */
-  --btn-text: #000000;      /* 버튼/플러스 글씨: 검정 (반전됨) */
+  /* [핵심] 다크모드 버튼 색상 (흰색 - 잘 보이게) */
+  --btn-bg: #ffffff;        
+  --btn-text: #000000;      
 }
 
 /* --------------------------------------------------- */
-/* 레이아웃 및 공통 스타일 */
+/* 기본 레이아웃 */
 /* --------------------------------------------------- */
 html { color-scheme: light dark; }
 
@@ -68,7 +70,7 @@ body {
   overflow: hidden;
 }
 
-/* ----- SIDEBAR ----- */
+/* ----- 사이드바 ----- */
 #sidebar {
   width: 320px;
   background: var(--bg-panel);
@@ -77,7 +79,6 @@ body {
   box-sizing: border-box;
   overflow-y: auto;
   flex-shrink: 0;
-  transition: background 0.2s, border-color 0.2s;
 }
 
 .brand {
@@ -90,7 +91,7 @@ body {
 .brand .logo {
   width: 40px;
   height: 40px;
-  background: var(--btn-bg);
+  background: var(--btn-bg); /* 버튼색과 동일하게 */
   color: var(--btn-text);
   border-radius: 50%;
   display: flex;
@@ -112,6 +113,7 @@ body {
 
 .panel { margin-top: 12px; }
 
+/* 로그인/회원가입 입력창 */
 .panel input {
   width: 100%;
   padding: 12px;
@@ -121,15 +123,13 @@ body {
   box-sizing: border-box;
   background: var(--bg-input);
   color: var(--text-main);
-  transition: all 0.2s;
 }
-
 .panel input:focus {
   outline: none;
   border-color: var(--text-main);
-  box-shadow: 0 0 0 2px rgba(100,100,100,0.1);
 }
 
+/* 로그인 버튼들 */
 .panel button {
   padding: 12px;
   border-radius: 8px;
@@ -138,13 +138,13 @@ body {
   border: 1px solid var(--btn-bg);
   cursor: pointer;
   font-weight: 600;
-  transition: opacity 0.2s, background 0.2s, color 0.2s;
+  transition: opacity 0.2s;
 }
-.panel button:hover { opacity: 0.85; }
+.panel button:hover { opacity: 0.8; }
 
 .hidden { display: none; }
 
-/* ----- ROOM LIST ----- */
+/* ----- 방 목록 ----- */
 #roomsList {
   margin-top: 12px;
   display: flex;
@@ -155,43 +155,33 @@ body {
 .roomItem {
   padding: 14px;
   border-radius: 10px;
-  background: var(--bg-room);
+  background: var(--room-bg);
+  border: 1px solid var(--border);
   display: flex;
   justify-content: space-between;
   align-items: center;
   cursor: pointer;
-  border: 1px solid var(--border);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
   transition: all 0.2s;
   color: var(--text-main);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.03);
 }
 
 .roomItem:hover {
   transform: translateY(-2px);
-  background: var(--bg-room-hover);
+  background: var(--room-hover);
   border-color: var(--text-main);
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
 
-.roomItem .name {
-  font-weight: 700;
-  font-size: 15px;
-}
+.roomItem .name { font-weight: 700; font-size: 15px; }
+.roomItem .meta { font-size: 12px; color: var(--text-sub); }
 
-.roomItem .meta {
-  font-size: 12px;
-  color: var(--text-sub);
-  font-weight: 500;
-}
-
-/* ----- MAIN CHAT AREA ----- */
+/* ----- 메인 채팅 영역 ----- */
 #main {
   flex: 1;
   display: flex;
   flex-direction: column;
   position: relative;
   background: var(--bg-main);
-  transition: background 0.2s;
 }
 
 #chatHeader {
@@ -203,7 +193,6 @@ body {
   background: var(--bg-main);
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
-  transition: background 0.2s, border-color 0.2s;
 }
 
 #roomName {
@@ -212,7 +201,7 @@ body {
   color: var(--text-main);
 }
 
-/* 다크모드 버튼 */
+/* 다크모드 토글 버튼 */
 #darkToggle {
   background: transparent;
   color: var(--text-main);
@@ -240,15 +229,13 @@ body {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  transition: background 0.2s;
 }
 
-/* ----- BUBBLES ----- */
+/* ----- 말풍선 ----- */
 .bubble {
   max-width: 65%;
   padding: 12px 18px;
   border-radius: 18px;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
   white-space: pre-wrap;
   word-wrap: break-word;
   word-break: break-all;
@@ -263,6 +250,7 @@ body {
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* 내 메시지 스타일 */
 .msg.me {
   align-self: flex-end;
   display: flex;
@@ -273,9 +261,9 @@ body {
   color: var(--text-me);
   
   border-bottom-right-radius: 2px;
-  transition: background 0.2s, color 0.2s;
 }
 
+/* 상대 메시지 스타일 */
 .msg.other {
   align-self: flex-start;
   display: flex;
@@ -287,7 +275,6 @@ body {
   border: 1px solid var(--border);
   
   border-bottom-left-radius: 2px;
-  transition: background 0.2s, color 0.2s;
 }
 
 .msg .meta {
@@ -302,16 +289,11 @@ body {
   border-radius: 12px;
   display: block;
   margin-bottom: 4px;
-  border: 1px solid rgba(0,0,0,0.1);
+  border: 1px solid var(--border);
 }
-.msg a {
-  color: inherit;
-  text-decoration: underline;
-  text-underline-offset: 4px;
-  font-weight: 600;
-}
+.msg a { color: inherit; text-decoration: underline; text-underline-offset: 4px; font-weight: 700; }
 
-/* ----- COMPOSE (입력창) ----- */
+/* ----- 입력창 (Compose) ----- */
 #compose {
   display: flex;
   gap: 12px;
@@ -320,7 +302,6 @@ body {
   border-top: 1px solid var(--border);
   flex-shrink: 0;
   align-items: flex-end;
-  transition: background 0.2s, border-color 0.2s;
 }
 
 #compose textarea {
@@ -330,7 +311,7 @@ body {
   
   background: var(--bg-input);
   color: var(--text-main);
-  border: 1px solid var(--input-border);
+  border: 1px solid var(--input-border); /* 테두리 확실하게 */
   
   resize: none;
   min-height: 48px;
@@ -338,51 +319,50 @@ body {
   font-family: inherit;
   font-size: 15px;
   outline: none;
-  transition: background 0.2s, color 0.2s, border-color 0.2s;
+  transition: border-color 0.2s;
 }
 
 #compose textarea:focus {
-  background: var(--bg-main);
-  border-color: var(--text-main);
-  box-shadow: 0 0 0 2px rgba(100,100,100,0.1);
+  border-color: var(--text-main); /* 포커스 시 진하게 */
+  box-shadow: 0 0 0 1px var(--text-main);
 }
 
 #compose input[type="file"] { display: none !important; }
 
-/* [수정됨] 파일 첨부(+) 버튼: 전송 버튼과 동일한 색상 변수 사용 */
-/* 이렇게 해야 다크모드에서 흰색 배경/검정 글씨로 확실히 반전됩니다 */
+/* [중요] 파일 첨부(+) 버튼 스타일 */
 .file-label {
   cursor: pointer;
   width: 48px;
   height: 48px;
-  background: var(--btn-bg);   /* 검정 -> 흰색 */
-  color: var(--btn-text);      /* 흰색 -> 검정 */
-  border: 1px solid var(--btn-bg);
+  
+  /* 전송 버튼과 완벽하게 동일한 색상 사용 */
+  background: var(--btn-bg); 
+  color: var(--btn-text);
+  
+  border: none;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
+  font-size: 24px; /* 플러스 아이콘 크기 키움 */
   flex-shrink: 0;
-  transition: all 0.2s;
+  transition: opacity 0.2s;
 }
+.file-label:hover { opacity: 0.8; }
 
-.file-label:hover {
-  opacity: 0.8;
-  transform: scale(1.05);
-}
-
-/* 전송 버튼 */
+/* [중요] 전송 버튼 스타일 */
 #compose button {
   height: 48px;
   padding: 0 28px;
+  
   background: var(--btn-bg);
   color: var(--btn-text);
-  border: 1px solid var(--btn-bg);
+  
+  border: none;
   border-radius: 24px;
   cursor: pointer;
   font-weight: 700;
   flex-shrink: 0;
-  transition: opacity 0.2s, background 0.2s, color 0.2s;
+  transition: opacity 0.2s;
 }
-#compose button:hover { opacity: 0.9; transform: translateY(-1px); }
+#compose button:hover { opacity: 0.8; }
