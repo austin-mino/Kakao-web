@@ -1,394 +1,348 @@
 
-:root {
-    --bg: #ffffff;
-    /* 배경: 순백색 */
-    --accent: #222222;
-    /* 포인트: 블랙 */
-    --panel-bg: #f9f9f9;
-    /* 사이드바: 아주 연한 회색 */
-    --text: #111;
-    --link: #000;
-    --border: #eee;
-    --room-hover: #f0f0f0;
-    /* 채팅방 호버 색상 */
-    --compose-bg: #f4f4f4;
-    /* 입력창 배경색 */
+:root{
+  --bg:#ffffff;       /* 배경: 순백색 */
+  --accent:#222222;   /* 포인트: 블랙 */
+  --panel-bg:#f9f9f9; /* 사이드바: 아주 연한 회색 */
+  --text:#111;
+  --link:#000;
+  --border:#eee;
 }
 
 body {
-    margin: 0;
-    height: 100vh;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial;
-    background: var(--bg);
-    color: var(--text);
+  margin:0;
+  height:100vh;
+  font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial;
+  background:var(--bg);
+  color:var(--text);
 }
 
-#app {
-    display: flex;
-    height: 100vh;
-    overflow: hidden;
+#app{
+  display:flex;
+  height:100vh;
+  overflow:hidden;
 }
 
 /* ----- SIDEBAR ----- */
-#sidebar {
-    width: 320px;
-    background: var(--panel-bg);
-    border-right: 1px solid var(--border);
-    padding: 20px;
-    box-sizing: border-box;
-    overflow-y: auto;
-    flex-shrink: 0;
+#sidebar{
+  width:320px;
+  background:var(--panel-bg);
+  border-right: 1px solid var(--border);
+  padding:20px;
+  box-sizing:border-box;
+  overflow-y:auto;
+  flex-shrink:0;
 }
 
-.brand {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 24px;
+.brand{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  margin-bottom:24px;
 }
 
-.brand .logo {
-    width: 40px;
-    height: 40px;
-    background: #000;
-    color: #fff;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 700;
-    font-size: 18px;
-    font-family: 'Georgia', serif;
+.brand .logo{
+  width:40px;
+  height:40px;
+  background:#000;
+  color: #fff;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-weight:700;
+  font-size: 18px;
+  font-family: 'Georgia', serif;
 }
 
-.brand .title {
-    font-weight: 800;
-    font-size: 20px;
-    letter-spacing: 1px;
-    text-transform: uppercase;
+.brand .title{
+  font-weight:800;
+  font-size:20px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
 }
 
-.panel {
-    margin-top: 12px;
+.panel{
+  margin-top:12px;
 }
 
-.panel input {
-    width: 100%;
-    padding: 12px;
-    border-radius: 8px;
-    border: 1px solid #ddd;
-    margin-bottom: 10px;
-    box-sizing: border-box;
-    background: #fff;
-    transition: border-color 0.2s;
+.panel input{
+  width:100%;
+  padding:12px;
+  border-radius:8px;
+  border:1px solid #ddd;
+  margin-bottom:10px;
+  box-sizing: border-box;
+  background: #fff;
+  transition: border-color 0.2s;
 }
 
-.panel input:focus {
-    outline: none;
-    border-color: #000;
+.panel input:focus{
+  outline: none;
+  border-color: #000;
 }
 
-.panel button {
-    padding: 12px;
-    border-radius: 8px;
-    background: #000;
-    color: #fff;
-    border: none;
-    cursor: pointer;
-    font-weight: 600;
-    transition: opacity 0.2s;
+.panel button{
+  padding:12px;
+  border-radius:8px;
+  background:#000;
+  color: #fff;
+  border:none;
+  cursor:pointer;
+  font-weight: 600;
+  transition: opacity 0.2s;
 }
 
-.panel button:hover {
-    opacity: 0.8;
+.panel button:hover{
+  opacity: 0.8;
 }
 
-.hidden {
-    display: none;
+.hidden{
+  display:none;
 }
 
 /* ----- ROOM LIST ----- */
-#roomsList {
-    margin-top: 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+#roomsList{
+  margin-top:12px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
 }
 
-.roomItem {
-    padding: 14px;
-    border-radius: 8px;
-    background: var(--bg);
-    /* 화이트모드에서 흰색 배경 */
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    cursor: pointer;
-    border: 1px solid var(--border);
-    /* 테두리 추가 */
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03);
-    transition: all 0.2s;
+.roomItem{
+  padding:14px;
+  border-radius:8px;
+  background:#fff;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  cursor:pointer;
+  border:1px solid transparent;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+  transition: all 0.2s;
 }
 
-.roomItem:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
-    background: var(--room-hover);
-    /* 호버 색상 변수 사용 */
-    border-color: var(--accent);
-    /* 호버 시 테두리 포인트 색상 */
+.roomItem:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.05);
 }
 
-.roomItem .name {
-    font-weight: 600;
-    font-size: 15px;
+.roomItem .name{
+  font-weight:600;
+  font-size: 15px;
 }
 
-.roomItem .meta {
-    font-size: 11px;
-    color: #888;
+.roomItem .meta{
+  font-size:11px;
+  color:#888;
 }
 
 /* ----- MAIN CHAT AREA ----- */
-#main {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    position: relative;
-    background: var(--bg);
-    /* 메인 배경 변수 사용 */
+#main{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  position:relative;
+  background: #fff;
 }
 
-#chatHeader {
-    height: 70px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 24px;
-    background: var(--panel-bg);
-    /* 헤더 배경 변수 사용 */
-    border-bottom: 1px solid var(--border);
-    flex-shrink: 0;
+#chatHeader{
+  height:70px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 24px;
+  background:#fff;
+  border-bottom: 1px solid var(--border);
+  flex-shrink:0;
 }
 
 #roomName {
-    font-weight: 700;
-    font-size: 18px;
+  font-weight: 700;
+  font-size: 18px;
 }
 
 /* 다크모드 버튼 스타일 (화이트/다크 모두 잘 보이게 수정됨) */
 #darkToggle {
-    background: transparent;
-    /* 투명 배경 */
-    color: #000;
-    /* 아이콘 검정 */
-    border: 1px solid #ddd;
-    /* 얇은 테두리 */
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    font-size: 18px;
-    transition: all 0.2s;
+  background: transparent; /* 투명 배경 */
+  color: #000;             /* 아이콘 검정 */
+  border: 1px solid #ddd;  /* 얇은 테두리 */
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 18px;
+  transition: all 0.2s;
 }
 
 #darkToggle:hover {
-    background: #f0f0f0;
-    border-color: #000;
+  background: #f0f0f0;
+  border-color: #000;
 }
 
-#messages {
-    flex: 1;
-    overflow-y: auto;
-    padding: 24px;
-    background: var(--bg);
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
+#messages{
+  flex:1;
+  overflow-y:auto;
+  padding:24px;
+  background:var(--bg);
+  display:flex;
+  flex-direction:column;
+  gap:12px;
 }
 
 /* ----- BUBBLES ----- */
 .bubble {
-    max-width: 65%;
-    padding: 12px 16px;
-    border-radius: 18px;
-    box-shadow: none;
-    white-space: pre-wrap;
-    word-wrap: break-word;
-    word-break: break-all;
-    font-size: 15px;
-    line-height: 1.5;
-    animation: fade-in 0.2s ease;
+  max-width:65%;
+  padding:12px 16px;
+  border-radius:18px;
+  box-shadow: none;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  word-break: break-all;
+  font-size: 15px;
+  line-height: 1.5;
+  animation: fade-in 0.2s ease;
 }
 
 @keyframes fade-in {
-    from {
-        opacity: 0;
-        transform: translateY(5px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+  from { opacity:0; transform: translateY(5px); }
+  to { opacity:1; transform: translateY(0); }
 }
 
 /* 내 메시지 (Black & White) */
 .msg.me {
-    align-self: flex-end;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-
-    background: #000;
-    color: #fff;
-
-    border-bottom-right-radius: 2px;
-    gap: 4px;
+  align-self: flex-end;
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  
+  background: #000;
+  color: #fff;
+  
+  border-bottom-right-radius:2px;
+  gap:4px;
 }
 
 /* 상대 메시지 (Gray) */
 .msg.other {
-    align-self: flex-start;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-
-    background: #f2f2f2;
-    color: #000;
-
-    border-bottom-left-radius: 2px;
-    gap: 4px;
+  align-self: flex-start;
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  
+  background: #f2f2f2;
+  color: #000;
+  
+  border-bottom-left-radius:2px;
+  gap:4px;
 }
 
 .msg .meta {
-    font-size: 11px;
-    color: #999;
-    margin-top: 4px;
+  font-size:11px;
+  color:#999;
+  margin-top:4px;
 }
 
 .msg.me .meta {
-    color: rgba(255, 255, 255, 0.6);
+  color: rgba(255,255,255,0.6);
 }
 
 .msg img {
-    max-width: 100%;
-    border-radius: 12px;
-    display: block;
-    margin-bottom: 4px;
+  max-width:100%;
+  border-radius:12px;
+  display:block;
+  margin-bottom: 4px;
 }
 
 .msg a {
-    color: inherit;
-    text-decoration: underline;
-    text-underline-offset: 3px;
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 /* ----- COMPOSE ----- */
-#compose {
-    display: flex;
-    gap: 10px;
-    padding: 20px;
-    background: var(--panel-bg);
-    /* 입력 영역 배경 변수 사용 */
-    border-top: 1px solid var(--border);
-    flex-shrink: 0;
-    align-items: flex-end;
+#compose{
+  display:flex;
+  gap:10px;
+  padding:20px;
+  background:#fff;
+  border-top:1px solid var(--border);
+  flex-shrink:0;
+  align-items:flex-end;
 }
 
-#compose textarea {
-    flex: 1;
-    padding: 14px;
-    border-radius: 24px;
-    background: var(--compose-bg);
-    /* 입력창 배경 변수 사용 */
-    border: 1px solid var(--border);
-    /* 입력창 테두리 변수 사용 */
-    resize: none;
-    min-height: 44px;
-    max-height: 120px;
-    font-family: inherit;
-    font-size: 15px;
-    outline: none;
-    transition: all 0.2s;
-    color: var(--text);
-    /* 텍스트 색상 변수 사용 */
+#compose textarea{
+  flex:1;
+  padding:14px;
+  border-radius:24px;
+  background: #f4f4f4;
+  border:1px solid transparent;
+  resize:none;
+  min-height:44px;
+  max-height:120px;
+  font-family:inherit;
+  font-size:15px;
+  outline: none;
+  transition: background 0.2s;
 }
 
 #compose textarea:focus {
-    background: var(--bg);
-    /* 포커스 시 배경 변수 사용 */
-    border-color: var(--accent);
-    /* 포커스 시 테두리 포인트 색상 */
+  background: #fff;
+  border-color: #ddd;
 }
 
-#compose input[type="file"] {
-    display: none !important;
+#compose input[type="file"]{
+  display:none !important;
 }
 
-.file-label {
-    cursor: pointer;
-    width: 44px;
-    height: 44px;
-    background: #f4f4f4;
-    color: #000;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 18px;
-    flex-shrink: 0;
-    transition: background 0.2s;
+.file-label{
+  cursor:pointer;
+  width: 44px;
+  height: 44px;
+  background: #f4f4f4;
+  color: #000;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:18px;
+  flex-shrink: 0;
+  transition: background 0.2s;
 }
 
 .file-label:hover {
-    background: #e0e0e0;
+  background: #e0e0e0;
 }
 
-#compose button {
-    height: 44px;
-    padding: 0 24px;
-    background: #000;
-    color: #fff;
-    border: none;
-    border-radius: 24px;
-    cursor: pointer;
-    font-weight: 600;
-    flex-shrink: 0;
-    transition: opacity 0.2s;
+#compose button{
+  height: 44px;
+  padding:0 24px;
+  background: #000;
+  color: #fff;
+  border:none;
+  border-radius:24px;
+  cursor:pointer;
+  font-weight: 600;
+  flex-shrink: 0;
+  transition: opacity 0.2s;
 }
 
-#compose button:hover {
-    opacity: 0.8;
+#compose button:hover{
+  opacity: 0.8;
 }
 
 
 /* ----- DARK MODE (전체 색상 반전 방식) ----- */
 html {
-    transition: filter 0.3s ease;
+  transition: filter 0.3s ease;
 }
 
 /* 다크모드 활성화 시 -> 화면 전체를 반전시킴 */
 /* 흰 배경은 검정이 되고, 검정 버튼은 흰색이 되어 잘 보임 */
 html.dark {
-    filter: invert(100%) hue-rotate(180deg);
-    --bg: #1a1a1a;
-    /* 다크모드 배경: 어두운 회색 */
-    --panel-bg: #222222;
-    /* 다크모드 패널: 더 어두운 회색 */
-    --border: #333333;
-    /* 다크모드 테두리: 어두운 회색 */
-    --room-hover: #2a2a2a;
-    /* 다크모드 호버: 약간 밝은 회색 */
-    --compose-bg: #2a2a2a;
-    /* 다크모드 입력창 배경: 어두운 회색 */
-    --text: #eee;
-    /* 다크모드 텍스트: 밝은 회색 */
-    --accent: #fdd835;
-    /* 다크모드 포인트: 노란색 (카카오톡 느낌) */
+  filter: invert(100%) hue-rotate(180deg);
 }
 
 /* [중요] 반전에서 제외할 요소들 */
@@ -396,66 +350,10 @@ html.dark {
 html.dark img,
 html.dark video,
 html.dark .logo {
-    filter: invert(100%) hue-rotate(180deg);
+  filter: invert(100%) hue-rotate(180deg);
 }
 
 /* 로고가 검정 배경에 묻히지 않도록 흰색 테두리 추가 */
 html.dark .logo {
-    box-shadow: 0 0 0 2px #fff;
-}
-
-/* 다크모드에서 반전된 색상 보정 */
-/* filter: invert(100%)로 인해 색상이 반전되므로, 다크모드에서 원하는 색상으로 보이도록 CSS 변수를 재정의합니다. */
-html.dark #sidebar,
-html.dark #chatHeader,
-html.dark #compose,
-html.dark .roomItem {
-    background: var(--panel-bg);
-    border-color: var(--border);
-}
-
-html.dark #main {
-    background: var(--bg);
-}
-
-html.dark .roomItem:hover {
-    background: var(--room-hover);
-    border-color: var(--accent);
-}
-
-html.dark #compose textarea {
-    background: var(--compose-bg);
-    border-color: var(--border);
-    color: var(--text);
-}
-
-html.dark #compose textarea:focus {
-    background: var(--bg);
-    border-color: var(--accent);
-}
-
-/* 다크모드에서 버튼 및 아이콘 색상 보정 */
-html.dark .panel button,
-html.dark #sendBtn {
-    background: var(--accent);
-    color: #000;
-}
-
-html.dark .file-label,
-html.dark #darkToggle,
-html.dark #newRoomBtn {
-    color: var(--text);
-    border-color: var(--border);
-}
-
-html.dark #darkToggle:hover,
-html.dark .file-label:hover {
-    background: var(--room-hover);
-    border-color: var(--accent);
-}
-
-/* 다크모드에서 내 메시지 말풍선 색상 보정 */
-html.dark .msg.me {
-    background: var(--accent);
-    color: #000;
+  box-shadow: 0 0 0 2px #fff;
 }
