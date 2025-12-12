@@ -192,10 +192,10 @@ function renderMessage(m) {
 async function sendMessage() {
   if (!currentRoom) return alert("방을 선택하세요.");
 
-  const text = textInput.value.trim();
+  const text = textInput.value;
   const image = imageInput.files[0];
 
-  if (!text && !image) return;
+  if (!text.trim() && !image) return;
 
   const form = new FormData();
   form.append("text", text);
@@ -218,11 +218,11 @@ async function sendMessage() {
 
 sendBtn.onclick = sendMessage;
 
-// ------------------- Shift+Enter 줄 바꿈 적용 -------------------
+/* ------------------------- Shift+Enter 줄 바꿈 / Enter 전송 ------------------------- */
 textInput.addEventListener("keydown", e => {
   if (e.key === "Enter") {
     if (e.shiftKey) {
-      // Shift + Enter → 줄 바꿈
+      // Shift+Enter → 줄 바꿈
       const start = textInput.selectionStart;
       const end = textInput.selectionEnd;
       textInput.value = textInput.value.substring(0, start) + "\n" + textInput.value.substring(end);
@@ -231,7 +231,7 @@ textInput.addEventListener("keydown", e => {
     } else {
       // Enter → 전송
       e.preventDefault();
-      if (!e.repeat) sendMessage();
+      sendBtn.click();
     }
   }
 });
