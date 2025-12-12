@@ -18,7 +18,6 @@ const bcrypt = require('bcryptjs');
 //------------------------------------------------------------
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecret_change_me';
-
 const UPLOAD_DIR = path.join(__dirname, 'uploads');
 if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR);
 
@@ -97,19 +96,17 @@ const verifyToken = (token) => {
 //------------------------------------------------------------
 app.post('/api/register', (req, res) => {
   const { username, password } = req.body || {};
-  if (!username || !password)
-    return res.json({ ok: false, error: '아이디/비밀번호 필요' });
+  if (!username || !password) return res.json({ ok: false, error: '아이디/비밀번호 필요' });
 
   db.get(`SELECT * FROM users WHERE username = ?`, [username], async (err, row) => {
+    if (err) return res.json({ ok: false, error: err.message });
     if (row) return res.json({ ok: false, error: '이미 존재하는 아이디' });
 
     const hashed = await bcrypt.hash(password, 10);
-    db.run(`INSERT INTO users (username, password) VALUES (?, ?)`,
-      [username, hashed],
-      err2 => {
-        if (err2) return res.json({ ok: false, error: err2.message });
-        return res.json({ ok: true });
-      });
+    db.run(`INSERT INTO users (username, password) VALUES (?, ?)`, [username, hashed], (err2) => {
+      if (err2) return res.json({ ok: false, error: err2.message });
+      return res.json({ ok: true });
+    });
   });
 });
 
@@ -118,10 +115,10 @@ app.post('/api/register', (req, res) => {
 //------------------------------------------------------------
 app.post('/api/login', (req, res) => {
   const { username, password } = req.body || {};
-  if (!username || !password)
-    return res.json({ ok: false, error: '아이디/비번 필요' });
+  if (!username || !password) return res.json({ ok: false, error: '아이디/비번 필요' });
 
   db.get(`SELECT * FROM users WHERE username = ?`, [username], async (err, user) => {
+    if (err) return res.json({ ok: false, error: err.message });
     if (!user) return res.json({ ok: false, error: '아이디 없음' });
 
     const match = await bcrypt.compare(password, user.password);
@@ -143,31 +140,24 @@ app.get('/api/me', (req, res) => {
 });
 
 //------------------------------------------------------------
-//  Rooms - Create
+//  Rooms - Create / List / Delete
 //------------------------------------------------------------
 app.post('/api/rooms', (req, res) => {
   const { name } = req.body || {};
   if (!name) return res.json({ ok: false, error: 'name required' });
 
   db.get(`SELECT * FROM rooms WHERE name = ?`, [name], (err, exists) => {
+    if (err) return res.json({ ok: false, error: err.message });
     if (exists) return res.json({ ok: true, room: exists });
 
     const now = Date.now();
-    db.run(`INSERT INTO rooms (name, created_at) VALUES (?, ?)`,
-      [name, now],
-      function (err2) {
-        if (err2) return res.json({ ok: false, error: err2.message });
-
-        db.get(`SELECT * FROM rooms WHERE id = ?`, [this.lastID], (e, row) => {
-          return res.json({ ok: true, room: row });
-        });
-      });
+    db.run(`INSERT INTO rooms (name, created_at) VALUES (?, ?)`, [name, now], function (err2) {
+      if (err2) return res.json({ ok: false, error: err2.message });
+      db.get(`SELECT * FROM rooms WHERE id = ?`, [this.lastID], (e, row) => res.json({ ok: true, room: row }));
+    });
   });
 });
 
-//------------------------------------------------------------
-//  Rooms - List
-//------------------------------------------------------------
 app.get('/api/rooms', (req, res) => {
   db.all(`SELECT * FROM rooms ORDER BY id DESC`, [], (err, rows) => {
     if (err) return res.json({ ok: false, error: err.message });
@@ -175,9 +165,6 @@ app.get('/api/rooms', (req, res) => {
   });
 });
 
-//------------------------------------------------------------
-//  Rooms - Delete
-//------------------------------------------------------------
 app.delete('/api/rooms/:id', (req, res) => {
   const roomId = parseInt(req.params.id);
   if (isNaN(roomId)) return res.json({ ok: false, error: 'Invalid room ID' });
@@ -186,17 +173,11 @@ app.delete('/api/rooms/:id', (req, res) => {
     if (err) return res.json({ ok: false, error: err.message });
     if (!room) return res.json({ ok: false, error: '방이 존재하지 않습니다.' });
 
-    // 방 관련 메시지 삭제
     db.run(`DELETE FROM messages WHERE room_id = ?`, [roomId], (err2) => {
       if (err2) return res.json({ ok: false, error: err2.message });
-
-      // 방 삭제
       db.run(`DELETE FROM rooms WHERE id = ?`, [roomId], (err3) => {
         if (err3) return res.json({ ok: false, error: err3.message });
-
-        // Socket.io로 다른 클라이언트에게 알림
         io.emit('room_deleted', { roomId });
-
         return res.json({ ok: true });
       });
     });
@@ -204,7 +185,7 @@ app.delete('/api/rooms/:id', (req, res) => {
 });
 
 //------------------------------------------------------------
-//  Messages - Send
+//  Messages - Send / List / Mark Read
 //------------------------------------------------------------
 app.post('/api/rooms/:roomId/messages', upload.single('image'), (req, res) => {
   const token = (req.headers.authorization || '').replace('Bearer ', '');
@@ -216,37 +197,25 @@ app.post('/api/rooms/:roomId/messages', upload.single('image'), (req, res) => {
   const image = req.file ? req.file.filename : null;
   const ts = Date.now();
 
-  db.run(
-    `INSERT INTO messages (room_id, user, text, image, ts, read_by) VALUES (?,?,?,?,?,?)`,
+  db.run(`INSERT INTO messages (room_id, user, text, image, ts, read_by) VALUES (?,?,?,?,?,?)`,
     [roomId, payload.user, text, image, ts, JSON.stringify([])],
     function (err) {
       if (err) return res.json({ ok: false, error: err.message });
-
       db.get(`SELECT * FROM messages WHERE id = ?`, [this.lastID], (e, msg) => {
         io.to('room_' + roomId).emit('new_message', { roomId, message: msg });
         return res.json({ ok: true, message: msg });
       });
-    }
-  );
-});
-
-//------------------------------------------------------------
-//  Messages - List
-//------------------------------------------------------------
-app.get('/api/rooms/:roomId/messages', (req, res) => {
-  const roomId = parseInt(req.params.roomId);
-
-  db.all(`SELECT * FROM messages WHERE room_id = ? ORDER BY ts ASC`,
-    [roomId],
-    (err, rows) => {
-      if (err) return res.json({ ok: false, error: err.message });
-      return res.json({ ok: true, messages: rows });
     });
 });
 
-//------------------------------------------------------------
-//  Messages - Mark as Read
-//------------------------------------------------------------
+app.get('/api/rooms/:roomId/messages', (req, res) => {
+  const roomId = parseInt(req.params.roomId);
+  db.all(`SELECT * FROM messages WHERE room_id = ? ORDER BY ts ASC`, [roomId], (err, rows) => {
+    if (err) return res.json({ ok: false, error: err.message });
+    return res.json({ ok: true, messages: rows });
+  });
+});
+
 app.post('/api/messages/:id/read', (req, res) => {
   const token = (req.headers.authorization || '').replace('Bearer ', '');
   const payload = verifyToken(token);
@@ -255,20 +224,16 @@ app.post('/api/messages/:id/read', (req, res) => {
   const msgId = parseInt(req.params.id);
   const user = payload.user;
 
-  db.get(`SELECT read_by FROM messages WHERE id = ?`,
-    [msgId],
-    (err, row) => {
-      if (err || !row) return res.json({ ok: false });
+  db.get(`SELECT read_by FROM messages WHERE id = ?`, [msgId], (err, row) => {
+    if (err || !row) return res.json({ ok: false });
 
-      let arr = [];
-      try { arr = JSON.parse(row.read_by || '[]'); } catch { arr = []; }
+    let arr = [];
+    try { arr = JSON.parse(row.read_by || '[]'); } catch { arr = []; }
 
-      if (!arr.includes(user)) arr.push(user);
+    if (!arr.includes(user)) arr.push(user);
 
-      db.run(`UPDATE messages SET read_by = ? WHERE id = ?`,
-        [JSON.stringify(arr), msgId],
-        () => res.json({ ok: true }));
-    });
+    db.run(`UPDATE messages SET read_by = ? WHERE id = ?`, [JSON.stringify(arr), msgId], () => res.json({ ok: true }));
+  });
 });
 
 //------------------------------------------------------------
@@ -277,83 +242,8 @@ app.post('/api/messages/:id/read', (req, res) => {
 app.get('/api/image/:file', (req, res) => {
   const file = req.params.file;
   const p = path.join(UPLOAD_DIR, file);
-
   if (!fs.existsSync(p)) return res.status(404).end();
   res.sendFile(p);
-});
-
-//------------------------------------------------------------
-//  Device APIs
-//------------------------------------------------------------
-app.post('/api/device/register', (req, res) => {
-  const { id, name } = req.body || {};
-  if (!id) return res.json({ ok: false, error: 'id required' });
-
-  db.run(
-    `INSERT OR REPLACE INTO devices (id, name, last_seen, queue) VALUES (?,?,?,?)`,
-    [id, name || 'phone', Date.now(), JSON.stringify([])],
-    () => res.json({ ok: true })
-  );
-});
-
-app.get('/api/device/poll', (req, res) => {
-  const id = req.query.id;
-  if (!id) return res.json({ ok: false });
-
-  db.get(`SELECT queue FROM devices WHERE id = ?`, [id], (err, row) => {
-    if (!row) return res.json({ ok: true, cmds: [] });
-
-    let q = [];
-    try { q = JSON.parse(row.queue || '[]'); } catch { q = []; }
-
-    db.run(`UPDATE devices SET queue = ?, last_seen = ? WHERE id = ?`,
-      [JSON.stringify([]), Date.now(), id]);
-
-    return res.json({ ok: true, cmds: q });
-  });
-});
-
-app.post('/api/device/:id/queue', (req, res) => {
-  const id = req.params.id;
-  const cmd = req.body;
-
-  db.get(`SELECT queue FROM devices WHERE id = ?`,
-    [id],
-    (err, row) => {
-      if (!row) return res.json({ ok: false });
-
-      let q = [];
-      try { q = JSON.parse(row.queue || '[]'); } catch { q = []; }
-
-      q.push(cmd);
-
-      db.run(`UPDATE devices SET queue = ? WHERE id = ?`,
-        [JSON.stringify(q), id],
-        () => res.json({ ok: true })
-      );
-    });
-});
-
-app.post('/api/device/report', (req, res) => {
-  const { type, payload } = req.body || {};
-  if (type !== 'received') return res.json({ ok: true });
-
-  const { roomId, user, text, image } = payload || {};
-  const ts = Date.now();
-
-  db.run(
-    `INSERT INTO messages (room_id, user, text, image, ts, read_by)
-     VALUES (?,?,?,?,?,?)`,
-    [roomId, user || 'phone', text || null, image || null, ts, JSON.stringify([])],
-    function (err) {
-      if (err) return res.json({ ok: false });
-
-      db.get(`SELECT * FROM messages WHERE id = ?`, [this.lastID], (e, msg) => {
-        io.to('room_' + roomId).emit('new_message', { roomId, message: msg });
-        return res.json({ ok: true });
-      });
-    }
-  );
 });
 
 //------------------------------------------------------------
