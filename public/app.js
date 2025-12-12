@@ -1,9 +1,7 @@
 const API = '';
-// [복구] 로컬 스토리지에서 토큰 가져오기 (자동 로그인용)
 let token = localStorage.getItem("token") || null;
 let user = localStorage.getItem("user") || null;
 
-// 브라우저별 고유 deviceId (메시지 정렬용)
 let deviceId = localStorage.getItem("deviceId");
 if (!deviceId) {
   deviceId = crypto.randomUUID();
@@ -23,7 +21,8 @@ const btnRegister = el('btnRegister');
 const roomsPanel = el('roomsPanel');
 const roomsList = el('roomsList');
 const newRoomBtn = el('newRoomBtn');
-const btnLogout = el('btnLogout'); // [추가] 로그아웃 버튼
+const btnLogout = el('btnLogout');
+const myIdDisplay = el('myIdDisplay'); // [추가] 아이디 표시 엘리먼트
 
 const chatHeader = el('chatHeader');
 const roomNameEl = el('roomName');
@@ -42,9 +41,11 @@ function setAuth(t, u) {
   token = t;
   user = u;
   
-  // [복구] 토큰 저장 (자동 로그인 활성화)
   localStorage.setItem("token", t);
   localStorage.setItem("user", u);
+
+  // [추가] 화면에 내 아이디 표시
+  if(myIdDisplay) myIdDisplay.textContent = u; 
 
   loginArea.classList.add('hidden');
   roomsPanel.classList.remove('hidden');
@@ -52,38 +53,33 @@ function setAuth(t, u) {
   loadRooms();
 }
 
-// [복구] 페이지 로드 시 토큰 있으면 자동 로그인
+// 자동 로그인 시 실행
 if (token && user) {
   setAuth(token, user);
 }
 
-// [추가] 로그아웃 로직
+// 로그아웃 로직
 function logout() {
-  // 1. 저장소 비우기
   localStorage.removeItem("token");
   localStorage.removeItem("user");
   
-  // 2. 메모리 초기화
   token = null;
   user = null;
   currentRoom = null;
 
-  // 3. UI 초기화
+  if(myIdDisplay) myIdDisplay.textContent = ""; // 아이디 지우기
+
   loginArea.classList.remove('hidden');
   roomsPanel.classList.add('hidden');
   chatHeader.classList.add('hidden');
   compose.classList.add('hidden');
   messagesEl.innerHTML = "";
   
-  // 입력창 초기화
   usernameInput.value = "";
   passwordInput.value = "";
 }
 
-// 로그아웃 버튼 클릭 이벤트
-if (btnLogout) {
-  btnLogout.onclick = logout;
-}
+if (btnLogout) btnLogout.onclick = logout;
 
 /* ------------------------- 서버 요청 ------------------------- */
 function request(path, opts = {}) {
@@ -128,7 +124,6 @@ async function loadRooms() {
   const res = await request("api/rooms");
   roomsList.innerHTML = "";
   if (!res.ok) {
-    // 토큰이 만료되었거나 유효하지 않으면 로그아웃 처리
     if (res.error === 'Unauthorized') logout();
     return;
   }
@@ -235,7 +230,6 @@ async function sendMessage() {
   if (image) form.append("image", image);
   form.append("deviceId", deviceId);
 
-  // UI 즉시 초기화
   textInput.value = "";
   imageInput.value = "";
   resizeTextarea();
