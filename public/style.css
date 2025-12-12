@@ -140,44 +140,45 @@ body {
 }
 
 /* ----- MESSAGE BUBBLES ----- */
-.bubble{
-  max-width:70%;
-  padding:10px 14px;
-  border-radius:16px;
-  margin-bottom:10px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+.bubble{ 
+  max-width:70%; 
+  padding:10px 14px; 
+  border-radius:16px; 
+  margin-bottom:10px; 
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06); 
 }
 
-.msg.me{
-  margin-left:auto;
-  background:var(--accent);
-  color:#000;
-  border-bottom-right-radius:6px;
+.msg.me{ 
+  margin-left:auto; 
+  background:var(--accent); 
+  color:#000; 
+  border-bottom-right-radius:6px; 
 }
 
-.msg.other{
-  margin-right:auto;
-  background:#fff;
-  color:#000;
-  border-bottom-left-radius:6px;
-  display:flex;
-  gap:8px;
-  align-items:flex-end;
+.msg.other{ 
+  margin-right:auto; 
+  background:#fff; 
+  color:#000; 
+  border-bottom-left-radius:6px; 
+  display:flex; 
+  gap:8px; 
+  align-items:flex-end; 
 }
 
-.msg .meta{
-  font-size:11px;
-  color:#666;
-  margin-top:6px;
-  text-align:right;
+.msg .meta{ 
+  font-size:11px; 
+  color:#666; 
+  margin-top:6px; 
+  text-align:right; 
 }
 
-.msg img{
-  max-width:200px;
-  border-radius:8px;
-  display:block;
-  margin-top:6px;
+.msg img{ 
+  max-width:200px; 
+  border-radius:8px; 
+  display:block; 
+  margin-top:6px; 
 }
+
 
 
 /* ----- MESSAGE COMPOSE AREA ----- */
