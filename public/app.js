@@ -2,7 +2,7 @@ const API = '';
 let token = localStorage.getItem("token") || null;
 let user = localStorage.getItem("user") || null;
 
-// 브라우저별 고유 deviceId 생성
+// 브라우저별 고유 deviceId 생성 (메시지 정렬용)
 let deviceId = localStorage.getItem("deviceId");
 if (!deviceId) {
   deviceId = crypto.randomUUID();
@@ -48,6 +48,11 @@ function setAuth(t, u) {
   loadRooms();
 }
 
+// 초기 로드 시 로그인 상태 체크
+if (token && user) {
+  setAuth(token, user);
+}
+
 function logout() {
   localStorage.removeItem("token");
   localStorage.removeItem("user");
@@ -56,6 +61,8 @@ function logout() {
 
   loginArea.classList.remove('hidden');
   roomsPanel.classList.add('hidden');
+  chatHeader.classList.add('hidden');
+  compose.classList.add('hidden');
 }
 
 /* ------------------------- 서버 요청 ------------------------- */
@@ -167,6 +174,7 @@ newRoomBtn.onclick = async () => {
 const renderCache = new Set();
 
 function linkify(text) {
+  // URL을 감지하여 a 태그로 변환
   const urlRegex = /(https?:\/\/[^\s]+)/g;
   return text.replace(urlRegex, url => `<a href="${url}" target="_blank">${url}</a>`);
 }
@@ -176,12 +184,16 @@ function renderMessage(m) {
   renderCache.add(m.id);
 
   const div = document.createElement("div");
+  // deviceId가 같으면 'me', 다르면 'other' 클래스 부여
   div.className = "msg bubble " + (m.deviceId === deviceId ? "me" : "other");
 
   let html = "";
-  if (m.text) html += `<div class="text">${linkify(escapeHtml(m.text))}</div>`;
+  // 텍스트가 있을 경우 (HTML 이스케이프 + 링크 처리)
+  if (m.text) html += `<div>${linkify(escapeHtml(m.text))}</div>`;
+  // 이미지가 있을 경우
   if (m.image) html += `<img src="/api/image/${m.image}" />`;
-  html += `<div class="meta">${new Date(m.ts).toLocaleTimeString()} - ${escapeHtml(m.user)}</div>`;
+  // 메타 정보 (시간 - 이름)
+  html += `<div class="meta">${new Date(m.ts).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} - ${escapeHtml(m.user)}</div>`;
 
   div.innerHTML = html;
   messagesEl.appendChild(div);
@@ -195,6 +207,7 @@ async function sendMessage() {
   const text = textInput.value;
   const image = imageInput.files[0];
 
+  // 내용이 없으면 전송 안 함
   if (!text.trim() && !image) return;
 
   const form = new FormData();
@@ -202,43 +215,59 @@ async function sendMessage() {
   if (image) form.append("image", image);
   form.append("deviceId", deviceId);
 
+  // 전송 즉시 UI 초기화 (반응성 향상)
+  textInput.value = "";
+  imageInput.value = "";
+  resizeTextarea(); // 높이 초기화
+  textInput.focus();
+
   const res = await fetch(`/api/rooms/${currentRoom}/messages`, {
     method: "POST",
     headers: token ? { "Authorization": "Bearer " + token } : {},
     body: form
   });
 
+  // 에러 처리
   const j = await res.json();
-  if (j.ok) {
-    textInput.value = "";
-    imageInput.value = "";
+  if (!j.ok) {
+    alert("전송 실패");
+  } else {
+    // 성공 시 스크롤만 내림 (메시지는 소켓으로 수신)
     scrollBottom();
   }
 }
 
 sendBtn.onclick = sendMessage;
 
-/* ------------------------- Shift+Enter 줄 바꿈 / Enter 전송 ------------------------- */
+/* ------------------------- Shift+Enter / Enter 처리 ------------------------- */
 textInput.addEventListener("keydown", e => {
+  // IME 입력 중(한글 조합 중)일 때 엔터키 무시 (중복 전송 방지)
+  if (e.isComposing) return;
+
   if (e.key === "Enter") {
-    if (e.shiftKey) {
-      // Shift+Enter → 줄 바꿈
-      const start = textInput.selectionStart;
-      const end = textInput.selectionEnd;
-      textInput.value = textInput.value.substring(0, start) + "\n" + textInput.value.substring(end);
-      textInput.selectionStart = textInput.selectionEnd = start + 1;
+    if (!e.shiftKey) {
+      // Shift 없이 Enter만 누르면 => 전송
       e.preventDefault();
-    } else {
-      // Enter → 전송
-      e.preventDefault();
-      sendBtn.click();
+      sendMessage();
     }
+    // Shift + Enter는 브라우저 기본 동작(줄바꿈) 수행 -> CSS의 pre-wrap 덕분에 줄바꿈 됨
   }
 });
 
+/* ------------------------- Textarea 자동 높이 조절 ------------------------- */
+function resizeTextarea() {
+  textInput.style.height = "auto"; // 높이 리셋
+  textInput.style.height = (textInput.scrollHeight) + "px"; // 내용에 맞춰 늘림
+}
+// 입력할 때마다 높이 조절
+textInput.addEventListener("input", resizeTextarea);
+
 /* ------------------------- 실시간 메시지 수신 ------------------------- */
 socket.on("new_message", ({ roomId, message }) => {
-  if (roomId == currentRoom) renderMessage(message);
+  if (roomId == currentRoom) {
+    renderMessage(message);
+    scrollBottom();
+  }
 });
 
 /* ------------------------- 다크모드 ------------------------- */
@@ -258,5 +287,8 @@ function escapeHtml(s) {
 }
 
 function scrollBottom() {
-  messagesEl.scrollTop = messagesEl.scrollHeight;
+  // 약간의 지연을 주어 이미지가 로드된 후 스크롤 되도록 유도
+  setTimeout(() => {
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }, 0);
 }
