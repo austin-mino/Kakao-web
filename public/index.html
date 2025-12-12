@@ -1,64 +1,10 @@
 <!doctype html>
 <html lang="ko">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Kakao-Web</title>
-<link rel="stylesheet" href="/style.css" />
-<style>
-  button {
-    touch-action: manipulation;
-  }
-
-  /* 로그인/회원가입 버튼 간격 */
-  #loginArea button + button {
-    margin-top: 5px;
-  }
-
-  /* 방 리스트 헤더 */
-  .panel-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 8px;
-  }
-
-  /* 다크모드 토글 버튼 */
-  #darkToggle {
-    background: none;
-    border: none;
-    font-size: 20px;
-    cursor: pointer;
-  }
-
-  /* 메시지 입력 textarea */
-  #textInput {
-    flex: 1;
-    padding: 10px;
-    border-radius: 20px;
-    border: 1px solid #ddd;
-    resize: none;
-    font-family: inherit;
-    font-size: 14px;
-  }
-
-  /* 파일 입력 아이콘 스타일링 */
-  .file-label {
-    cursor: pointer;
-    padding: 8px 12px;
-    background: var(--accent);
-    border-radius: 20px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 18px;
-  }
-
-  /* 숨겨진 파일 input */
-  #imageInput {
-    display: none;
-  }
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Kakao-Web</title>
+  <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
   <div id="app">
@@ -68,7 +14,6 @@
         <div class="title">Kakao-Web</div>
       </div>
 
-      <!-- 로그인/회원가입 영역 -->
       <div id="loginArea" class="panel">
         <h3>로그인</h3>
         <input id="username" placeholder="아이디 입력" autocomplete="off" />
@@ -77,59 +22,35 @@
         <button id="btnRegister" type="button">회원가입</button>
       </div>
 
-      <!-- 방 리스트 -->
       <div id="roomsPanel" class="panel hidden">
-        <div class="panel-header">
-          <span>채팅방</span>
-          <button id="newRoomBtn" type="button">+</button>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <span style="font-weight:700; font-size:16px;">채팅방</span>
+          <button id="newRoomBtn" type="button" style="padding:4px 10px; font-size:16px;">+</button>
         </div>
         <div id="roomsList"></div>
       </div>
     </aside>
 
     <main id="main">
-      <!-- 채팅 상단 -->
       <div id="chatHeader" class="hidden">
         <div id="roomName">Room</div>
-        <button id="darkToggle" type="button">🌙</button>
+        <button id="darkToggle" type="button" title="다크모드 토글">🌙</button>
       </div>
 
-      <!-- 메시지 목록 -->
       <div id="messages"></div>
 
-      <!-- 메시지 입력 -->
-      <div id="compose" class="hidden" style="display:flex; gap:8px; padding:12px; background:var(--panel-bg); border-top:1px solid #eee;">
-        <textarea id="textInput" placeholder="메시지 입력..." rows="2"></textarea>
+      <div id="compose" class="hidden">
+        <textarea id="textInput" placeholder="메시지 입력..."></textarea>
+        
         <label for="imageInput" class="file-label" title="이미지 첨부">📎</label>
         <input id="imageInput" type="file" accept="image/*" />
+        
         <button id="sendBtn" type="button">전송</button>
       </div>
     </main>
   </div>
 
-<script src="/socket.io/socket.io.js"></script>
-<script src="/app.js"></script>
-<script>
-  // Shift+Enter 줄 바꿈, Enter 전송
-  const textInput = document.getElementById('textInput');
-  const sendBtn = document.getElementById('sendBtn');
-
-  textInput.addEventListener('keydown', e => {
-    if (e.key === 'Enter') {
-      if (e.shiftKey) {
-        // Shift+Enter → 줄 바꿈
-        const start = textInput.selectionStart;
-        const end = textInput.selectionEnd;
-        textInput.value = textInput.value.substring(0, start) + "\n" + textInput.value.substring(end);
-        textInput.selectionStart = textInput.selectionEnd = start + 1;
-        e.preventDefault();
-      } else {
-        // Enter → 전송
-        e.preventDefault();
-        sendBtn.click();
-      }
-    }
-  });
-</script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/app.js"></script>
 </body>
 </html>
