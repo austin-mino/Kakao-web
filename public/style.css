@@ -289,7 +289,7 @@ body {
 
 #compose textarea:focus {
   background: #fff;
-  border-color: #cccccc;
+  border-color: #333333;
 }
 
 #compose input[type="file"]{
