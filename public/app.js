@@ -58,7 +58,7 @@ function logout() {
   roomsPanel.classList.add('hidden');
 }
 
-/* 서버 요청 */
+/* ------------------------- 서버 요청 ------------------------- */
 function request(path, opts = {}) {
   opts.headers = opts.headers || {};
   if (token) opts.headers["Authorization"] = "Bearer " + token;
@@ -176,16 +176,14 @@ function renderMessage(m) {
   renderCache.add(m.id);
 
   const div = document.createElement("div");
-  // deviceId 기준 오른쪽/왼쪽
   div.className = "msg bubble " + (m.deviceId === deviceId ? "me" : "other");
 
   let html = "";
   if (m.text) html += `<div class="text">${linkify(escapeHtml(m.text))}</div>`;
   if (m.image) html += `<img src="/api/image/${m.image}" />`;
-
   html += `<div class="meta">${new Date(m.ts).toLocaleTimeString()} - ${escapeHtml(m.user)}</div>`;
-  div.innerHTML = html;
 
+  div.innerHTML = html;
   messagesEl.appendChild(div);
   scrollBottom();
 }
@@ -202,7 +200,7 @@ async function sendMessage() {
   const form = new FormData();
   form.append("text", text);
   if (image) form.append("image", image);
-  form.append("deviceId", deviceId); // deviceId 전송
+  form.append("deviceId", deviceId);
 
   const res = await fetch(`/api/rooms/${currentRoom}/messages`, {
     method: "POST",
@@ -214,6 +212,7 @@ async function sendMessage() {
   if (j.ok) {
     textInput.value = "";
     imageInput.value = "";
+    scrollBottom();
   }
 }
 
