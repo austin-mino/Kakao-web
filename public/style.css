@@ -141,24 +141,20 @@ body {
 
 /* ----- MESSAGE BUBBLES ----- */
 .bubble{
-  max-width:70%;                /* 버블 최대 너비 */
-  padding:10px 14px;            /* 안쪽 여백 */
-  border-radius:16px;           /* 모서리 둥글게 */
-  margin-bottom:10px;           /* 메시지 간격 */
-  box-shadow:0 1px 3px rgba(0,0,0,0.06); /* 그림자 */
-  display:inline-block;
+  max-width:70%;
+  padding:10px 14px;
+  border-radius:16px;
+  margin-bottom:10px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
 }
 
-/* 내가 보낸 메시지 — 오른쪽 정렬, 노란색 */
 .msg.me{
   margin-left:auto;
   background:var(--accent);
   color:#000;
   border-bottom-right-radius:6px;
-  text-align:right;
 }
 
-/* 상대 메시지 — 왼쪽 정렬, 흰색 */
 .msg.other{
   margin-right:auto;
   background:#fff;
@@ -169,28 +165,18 @@ body {
   align-items:flex-end;
 }
 
-/* 메시지 메타 정보 (시간/유저) */
 .msg .meta{
   font-size:11px;
   color:#666;
   margin-top:6px;
+  text-align:right;
 }
 
-/* 메시지 이미지 */
 .msg img{
   max-width:200px;
   border-radius:8px;
   display:block;
   margin-top:6px;
-}
-
-/* 이미지 정렬 */
-.msg.me img{
-  margin-left:auto;
-}
-
-.msg.other img{
-  margin-right:auto;
 }
 
 
