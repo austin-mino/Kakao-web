@@ -217,10 +217,22 @@ async function sendMessage() {
 }
 
 sendBtn.onclick = sendMessage;
+
+// ------------------- Shift+Enter 줄 바꿈 적용 -------------------
 textInput.addEventListener("keydown", e => {
   if (e.key === "Enter") {
-    e.preventDefault();
-    if (!e.repeat) sendMessage();
+    if (e.shiftKey) {
+      // Shift + Enter → 줄 바꿈
+      const start = textInput.selectionStart;
+      const end = textInput.selectionEnd;
+      textInput.value = textInput.value.substring(0, start) + "\n" + textInput.value.substring(end);
+      textInput.selectionStart = textInput.selectionEnd = start + 1;
+      e.preventDefault();
+    } else {
+      // Enter → 전송
+      e.preventDefault();
+      if (!e.repeat) sendMessage();
+    }
   }
 });
 
