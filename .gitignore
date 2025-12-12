@@ -1,3 +1,26 @@
+# Node modules
 node_modules/
+
+# 업로드/데이터
 uploads/
 messages.db
+
+# 로그
+*.log
+
+# 환경 변수
+.env
+
+# OS 관련
+.DS_Store
+Thumbs.db
+
+# IDE/편집기
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+
+# 빌드/배포 폴더 (필요시 추가)
+dist/
+build/
