@@ -17,41 +17,47 @@ const bcrypt = require('bcryptjs');
 //  Config
 //------------------------------------------------------------
 const PORT = process.env.PORT || 3000;
-const JWT_SECRET = process.env.JWT_SECRET || 'supersecret_change_me';
+const JWT_SECRET = 'your_super_secret_key_change_this'; // 보안 키
 const UPLOAD_DIR = path.join(__dirname, 'uploads');
+
+// 업로드 폴더 없으면 생성
 if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR);
 
 //------------------------------------------------------------
-//  Multer (Image Upload)
+//  Multer (이미지 업로드 설정)
 //------------------------------------------------------------
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, UPLOAD_DIR),
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname);
-    cb(null, Date.now().toString() + Math.random().toString(36).slice(2, 8) + ext);
+    // 파일명 중복 방지를 위해 시간+난수 조합
+    cb(null, Date.now() + Math.random().toString(36).substring(2, 8) + ext);
   }
 });
 const upload = multer({ storage });
 
 //------------------------------------------------------------
-//  Database
+//  Database (SQLite)
 //------------------------------------------------------------
-const DB_FILE = path.join(__dirname, 'messages.db');
+const DB_FILE = path.join(__dirname, 'chat.db'); // DB 파일명
 const db = new sqlite3.Database(DB_FILE);
 
 db.serialize(() => {
+  // 사용자 테이블
   db.run(`CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT UNIQUE,
     password TEXT
   )`);
 
+  // 채팅방 테이블
   db.run(`CREATE TABLE IF NOT EXISTS rooms (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT UNIQUE,
     created_at INTEGER
   )`);
 
+  // 메시지 테이블
   db.run(`CREATE TABLE IF NOT EXISTS messages (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     room_id INTEGER,
@@ -61,17 +67,10 @@ db.serialize(() => {
     ts INTEGER,
     read_by TEXT
   )`);
-
-  db.run(`CREATE TABLE IF NOT EXISTS devices (
-    id TEXT PRIMARY KEY,
-    name TEXT,
-    last_seen INTEGER,
-    queue TEXT
-  )`);
 });
 
 //------------------------------------------------------------
-//  Express + Socket.IO
+//  Express + Socket.IO 설정
 //------------------------------------------------------------
 const app = express();
 const server = http.createServer(app);
@@ -79,182 +78,146 @@ const io = new Server(server, { cors: { origin: '*' } });
 
 app.use(cors());
 app.use(bodyParser.json());
-app.use(express.static(path.join(__dirname, 'public')));
-app.use('/uploads', express.static(UPLOAD_DIR));
+app.use(express.static(path.join(__dirname, 'public'))); // 정적 파일 경로
+app.use('/api/image', express.static(UPLOAD_DIR)); // 이미지 접근 경로
 
 //------------------------------------------------------------
-//  JWT Helper
+//  JWT Helper (토큰 생성/검증)
 //------------------------------------------------------------
-const signToken = (payload) => jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' });
-const verifyToken = (token) => {
-  try { return jwt.verify(token, JWT_SECRET); }
-  catch { return null; }
+const signToken = (payload) => jwt.sign(payload, JWT_SECRET, { expiresIn: '30d' });
+
+const verifyToken = (req) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) return null;
+  const token = authHeader.replace('Bearer ', '');
+  try {
+    return jwt.verify(token, JWT_SECRET);
+  } catch (e) {
+    return null;
+  }
 };
 
 //------------------------------------------------------------
-//  AUTH - Register
+//  API: 회원가입
 //------------------------------------------------------------
 app.post('/api/register', (req, res) => {
-  const { username, password } = req.body || {};
-  if (!username || !password) return res.json({ ok: false, error: '아이디/비밀번호 필요' });
+  const { username, password } = req.body;
+  if (!username || !password) return res.json({ ok: false, error: '정보 부족' });
 
   db.get(`SELECT * FROM users WHERE username = ?`, [username], async (err, row) => {
-    if (err) return res.json({ ok: false, error: err.message });
-    if (row) return res.json({ ok: false, error: '이미 존재하는 아이디' });
+    if (row) return res.json({ ok: false, error: '이미 존재하는 아이디입니다.' });
 
+    // 비밀번호 암호화
     const hashed = await bcrypt.hash(password, 10);
-    db.run(`INSERT INTO users (username, password) VALUES (?, ?)`, [username, hashed], (err2) => {
-      if (err2) return res.json({ ok: false, error: err2.message });
-      return res.json({ ok: true });
+    
+    db.run(`INSERT INTO users (username, password) VALUES (?, ?)`, [username, hashed], (err) => {
+      if (err) return res.json({ ok: false, error: err.message });
+      res.json({ ok: true });
     });
   });
 });
 
 //------------------------------------------------------------
-//  AUTH - Login
+//  API: 로그인
 //------------------------------------------------------------
 app.post('/api/login', (req, res) => {
-  const { username, password } = req.body || {};
-  if (!username || !password) return res.json({ ok: false, error: '아이디/비번 필요' });
-
+  const { username, password } = req.body;
+  
   db.get(`SELECT * FROM users WHERE username = ?`, [username], async (err, user) => {
-    if (err) return res.json({ ok: false, error: err.message });
-    if (!user) return res.json({ ok: false, error: '아이디 없음' });
+    if (err || !user) return res.status(401).json({ ok: false, error: '아이디가 없습니다.' });
 
+    // 암호 비교
     const match = await bcrypt.compare(password, user.password);
-    if (!match) return res.json({ ok: false, error: '비밀번호 틀림' });
+    if (!match) return res.status(401).json({ ok: false, error: '비밀번호가 틀렸습니다.' });
 
-    const token = signToken({ user: username, userId: user.id });
-    return res.json({ ok: true, token, user: username });
+    // 토큰 발급
+    const token = signToken({ username: user.username, id: user.id });
+    res.json({ ok: true, token, username: user.username });
   });
 });
 
 //------------------------------------------------------------
-//  AUTH - Auto Login
+//  API: 방 목록 / 생성 / 삭제
 //------------------------------------------------------------
-app.get('/api/me', (req, res) => {
-  const token = (req.headers.authorization || '').replace('Bearer ', '');
-  const payload = verifyToken(token);
-  if (!payload) return res.json({ ok: false });
-  return res.json({ ok: true, user: payload.user });
-});
-
-//------------------------------------------------------------
-//  Rooms - Create / List / Delete
-//------------------------------------------------------------
-app.post('/api/rooms', (req, res) => {
-  const { name } = req.body || {};
-  if (!name) return res.json({ ok: false, error: 'name required' });
-
-  db.get(`SELECT * FROM rooms WHERE name = ?`, [name], (err, exists) => {
-    if (err) return res.json({ ok: false, error: err.message });
-    if (exists) return res.json({ ok: true, room: exists });
-
-    const now = Date.now();
-    db.run(`INSERT INTO rooms (name, created_at) VALUES (?, ?)`, [name, now], function (err2) {
-      if (err2) return res.json({ ok: false, error: err2.message });
-      db.get(`SELECT * FROM rooms WHERE id = ?`, [this.lastID], (e, row) => res.json({ ok: true, room: row }));
-    });
-  });
-});
-
 app.get('/api/rooms', (req, res) => {
   db.all(`SELECT * FROM rooms ORDER BY id DESC`, [], (err, rows) => {
-    if (err) return res.json({ ok: false, error: err.message });
-    return res.json({ ok: true, rooms: rows });
+    res.json({ ok: true, rooms: rows || [] });
+  });
+});
+
+app.post('/api/rooms', (req, res) => {
+  const { name } = req.body;
+  if (!name) return;
+
+  const now = Date.now();
+  db.run(`INSERT INTO rooms (name, created_at) VALUES (?, ?)`, [name, now], function(err) {
+    if (err) return res.json({ ok: false, error: '방 생성 실패' });
+    
+    db.get(`SELECT * FROM rooms WHERE id = ?`, [this.lastID], (e, row) => {
+      res.json({ ok: true, room: row });
+    });
   });
 });
 
 app.delete('/api/rooms/:id', (req, res) => {
-  const roomId = parseInt(req.params.id);
-  if (isNaN(roomId)) return res.json({ ok: false, error: 'Invalid room ID' });
-
-  db.get(`SELECT * FROM rooms WHERE id = ?`, [roomId], (err, room) => {
-    if (err) return res.json({ ok: false, error: err.message });
-    if (!room) return res.json({ ok: false, error: '방이 존재하지 않습니다.' });
-
-    db.run(`DELETE FROM messages WHERE room_id = ?`, [roomId], (err2) => {
-      if (err2) return res.json({ ok: false, error: err2.message });
-      db.run(`DELETE FROM rooms WHERE id = ?`, [roomId], (err3) => {
-        if (err3) return res.json({ ok: false, error: err3.message });
-        io.emit('room_deleted', { roomId });
-        return res.json({ ok: true });
-      });
+  const roomId = req.params.id;
+  // 방 삭제 시 메시지도 함께 삭제
+  db.run(`DELETE FROM messages WHERE room_id = ?`, [roomId], () => {
+    db.run(`DELETE FROM rooms WHERE id = ?`, [roomId], () => {
+      io.emit('room_deleted', { roomId }); // 소켓 알림 (선택사항)
+      res.json({ ok: true });
     });
   });
 });
 
 //------------------------------------------------------------
-//  Messages - Send / List / Mark Read
+//  API: 메시지 목록 / 전송
 //------------------------------------------------------------
-app.post('/api/rooms/:roomId/messages', upload.single('image'), (req, res) => {
-  const token = (req.headers.authorization || '').replace('Bearer ', '');
-  const payload = verifyToken(token);
-  if (!payload) return res.json({ ok: false, error: 'unauthorized' });
+app.get('/api/rooms/:id/messages', (req, res) => {
+  const roomId = req.params.id;
+  db.all(`SELECT * FROM messages WHERE room_id = ? ORDER BY ts ASC`, [roomId], (err, rows) => {
+    res.json({ ok: true, messages: rows || [] });
+  });
+});
 
-  const roomId = parseInt(req.params.roomId);
-  const text = req.body.text || null;
+app.post('/api/rooms/:id/messages', upload.single('image'), (req, res) => {
+  // 토큰 검증
+  const payload = verifyToken(req);
+  if (!payload) return res.status(401).json({ ok: false, error: 'Unauthorized' });
+
+  const roomId = req.params.id;
+  const { text } = req.body;
   const image = req.file ? req.file.filename : null;
+  const user = payload.username; // 토큰에서 유저 이름 추출
   const ts = Date.now();
 
-  db.run(`INSERT INTO messages (room_id, user, text, image, ts, read_by) VALUES (?,?,?,?,?,?)`,
-    [roomId, payload.user, text, image, ts, JSON.stringify([])],
-    function (err) {
-      if (err) return res.json({ ok: false, error: err.message });
+  db.run(
+    `INSERT INTO messages (room_id, user, text, image, ts, read_by) VALUES (?, ?, ?, ?, ?, ?)`,
+    [roomId, user, text, image, ts, '[]'],
+    function(err) {
+      if (err) return res.json({ ok: false });
+
+      // 저장된 메시지 다시 가져와서 소켓 전송
       db.get(`SELECT * FROM messages WHERE id = ?`, [this.lastID], (e, msg) => {
-        io.to('room_' + roomId).emit('new_message', { roomId, message: msg });
-        return res.json({ ok: true, message: msg });
+        io.to(roomId).emit('new_message', { roomId, message: msg });
+        res.json({ ok: true });
       });
-    });
-});
-
-app.get('/api/rooms/:roomId/messages', (req, res) => {
-  const roomId = parseInt(req.params.roomId);
-  db.all(`SELECT * FROM messages WHERE room_id = ? ORDER BY ts ASC`, [roomId], (err, rows) => {
-    if (err) return res.json({ ok: false, error: err.message });
-    return res.json({ ok: true, messages: rows });
-  });
-});
-
-app.post('/api/messages/:id/read', (req, res) => {
-  const token = (req.headers.authorization || '').replace('Bearer ', '');
-  const payload = verifyToken(token);
-  if (!payload) return res.json({ ok: false, error: 'unauthorized' });
-
-  const msgId = parseInt(req.params.id);
-  const user = payload.user;
-
-  db.get(`SELECT read_by FROM messages WHERE id = ?`, [msgId], (err, row) => {
-    if (err || !row) return res.json({ ok: false });
-
-    let arr = [];
-    try { arr = JSON.parse(row.read_by || '[]'); } catch { arr = []; }
-
-    if (!arr.includes(user)) arr.push(user);
-
-    db.run(`UPDATE messages SET read_by = ? WHERE id = ?`, [JSON.stringify(arr), msgId], () => res.json({ ok: true }));
-  });
-});
-
-//------------------------------------------------------------
-//  Image Serve
-//------------------------------------------------------------
-app.get('/api/image/:file', (req, res) => {
-  const file = req.params.file;
-  const p = path.join(UPLOAD_DIR, file);
-  if (!fs.existsSync(p)) return res.status(404).end();
-  res.sendFile(p);
+    }
+  );
 });
 
 //------------------------------------------------------------
 //  Socket.IO
 //------------------------------------------------------------
 io.on('connection', (socket) => {
-  socket.on('join_room', (roomId) => socket.join('room_' + roomId));
-  socket.on('leave_room', (roomId) => socket.leave('room_' + roomId));
+  socket.on('join_room', (roomId) => {
+    socket.join(roomId);
+  });
 });
 
 //------------------------------------------------------------
-//  Start Server
+//  서버 시작
 //------------------------------------------------------------
-server.listen(PORT, () => console.log(`Server running on ${PORT}`));
+server.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
+});
