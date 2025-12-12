@@ -355,3 +355,29 @@ body {
 .dark .msg.me .meta {
   color: rgba(0,0,0,0.6);
 }
+
+/* 다크모드 버튼 스타일 강화 */
+#darkToggle {
+  background: #000;      /* 배경: 검정 */
+  color: #fff;           /* 아이콘: 흰색 */
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;    /* 동그랗게 */
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.2s;
+  
+  /* 위치나 마진은 기존 레이아웃에 맞춤 */
+  font-size: 18px;
+}
+
+#darkToggle:hover {
+  transform: scale(1.1); /* 마우스 올리면 살짝 커짐 */
+}
+
+/* [중요] 다크모드일 때 버튼은 반전에서 제외할지 말지 결정 */
+/* 이 버튼은 그냥 놔두면 반전되어 '흰색 배경에 검정 아이콘'이 되어 잘 보입니다. */
+/* 따라서 html.dark .logo 처럼 별도로 filter 코드를 추가할 필요가 없습니다. */
