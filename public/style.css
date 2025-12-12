@@ -1,10 +1,18 @@
 :root {
-  --bg: #ffffff;       /* 배경: 순백색 */
-  --accent: #222222;   /* 포인트: 블랙 */
-  --panel-bg: #f9f9f9; /* 사이드바: 아주 연한 회색 */
+  --bg: #ffffff;       
+  --accent: #222222;   
+  --panel-bg: #f9f9f9; 
   --text: #111;
   --link: #000;
   --border: #eee;
+  /* 입력창 등 배경을 구분하기 위한 진한 회색 변수 추가 */
+  --input-bg: #e0e0e0; 
+  --input-bg-focus: #fff;
+}
+
+/* 박스 크기 계산 통일 (사이즈 틀어짐 방지) */
+*, *::before, *::after {
+  box-sizing: border-box;
 }
 
 body {
@@ -27,7 +35,6 @@ body {
   background: var(--panel-bg);
   border-right: 1px solid var(--border);
   padding: 20px;
-  box-sizing: border-box;
   overflow-y: auto;
   flex-shrink: 0;
 }
@@ -60,7 +67,7 @@ body {
   text-transform: uppercase;
 }
 
-/* ----- SIDEBAR PANELS & INPUTS (수정됨) ----- */
+/* ----- SIDEBAR CONTROLS (색상 강조형) ----- */
 .panel {
   margin-top: 12px;
 }
@@ -69,73 +76,68 @@ body {
   width: 100%;
   padding: 12px;
   border-radius: 8px;
-  border: 1px solid #ccc; /* 테두리 조금 더 진하게 */
+  /* 테두리 대신 배경색을 회색으로 깔아서 잘 보이게 함 */
+  background: #e9e9e9; 
+  border: 2px solid transparent; /* 포커스 시 크기 변화 방지용 투명 테두리 */
   margin-bottom: 10px;
-  box-sizing: border-box;
-  background: #fff;
+  font-size: 14px;
   transition: all 0.2s;
 }
 
+/* 입력하려 클릭하면 배경이 흰색 되고 검정 테두리 생김 */
 .panel input:focus {
-  outline: none;
+  background: #fff;
   border-color: #000;
-  box-shadow: 0 0 0 2px rgba(0,0,0,0.1); /* 포커스 시 미세한 광채 */
+  outline: none;
 }
 
 .panel button {
   width: 100%;
-  padding: 14px;
+  padding: 12px;
   border-radius: 8px;
   background: #000;
   color: #fff;
-  border: none;
+  border: 2px solid #000;
   cursor: pointer;
   font-weight: 700;
-  transition: all 0.2s;
-  /* 버튼 그림자 추가 (입체감) */
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2); 
+  transition: background 0.2s, color 0.2s;
 }
 
+/* 마우스 올리면 색 반전 (흰배경+검은글씨) -> 확실히 티남 */
 .panel button:hover {
-  background: #333;
-  transform: translateY(-2px); /* 마우스 올리면 살짝 뜸 */
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
-}
-
-.panel button:active {
-  transform: translateY(0);
+  background: #fff;
+  color: #000;
 }
 
 .hidden {
   display: none;
 }
 
-/* ----- ROOM LIST (수정됨) ----- */
+/* ----- ROOM LIST (색상 강조형) ----- */
 #roomsList {
-  margin-top: 12px;
+  margin-top: 16px;
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
 .roomItem {
-  padding: 14px;
+  padding: 12px 14px;
   border-radius: 8px;
   background: #fff;
   display: flex;
   justify-content: space-between;
   align-items: center;
   cursor: pointer;
-  /* 테두리 추가 */
-  border: 1px solid #e0e0e0;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+  /* 기본 상태: 회색 테두리로 영역 표시 */
+  border: 1px solid #ddd;
   transition: all 0.2s;
 }
 
+/* 마우스 올리면 배경이 진해지고 테두리가 검정이 됨 */
 .roomItem:hover {
-  transform: translateY(-2px);
-  border-color: #000; /* 호버 시 테두리 검정으로 강조 */
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  background: #f0f0f0; 
+  border-color: #000;
 }
 
 .roomItem .name {
@@ -158,7 +160,7 @@ body {
 }
 
 #chatHeader {
-  height: 70px;
+  height: 60px; /* 헤더 높이 살짝 줄여서 공간 확보 */
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -173,7 +175,6 @@ body {
   font-size: 18px;
 }
 
-/* 다크모드 토글 버튼 */
 #darkToggle {
   background: transparent;
   color: #000;
@@ -190,7 +191,8 @@ body {
 }
 
 #darkToggle:hover {
-  background: #f0f0f0;
+  background: #000;
+  color: #fff;
   border-color: #000;
 }
 
@@ -207,9 +209,8 @@ body {
 /* ----- BUBBLES ----- */
 .bubble {
   max-width: 65%;
-  padding: 12px 16px;
-  border-radius: 18px;
-  box-shadow: none;
+  padding: 10px 14px;
+  border-radius: 16px;
   white-space: pre-wrap;
   word-wrap: break-word;
   word-break: break-all;
@@ -223,7 +224,6 @@ body {
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* 내 메시지 (Black & White) */
 .msg.me {
   align-self: flex-end;
   display: flex;
@@ -235,7 +235,6 @@ body {
   gap: 4px;
 }
 
-/* 상대 메시지 (Gray) */
 .msg.other {
   align-self: flex-start;
   display: flex;
@@ -270,7 +269,7 @@ body {
   text-underline-offset: 3px;
 }
 
-/* ----- COMPOSE (수정됨) ----- */
+/* ----- COMPOSE (입력창 색상 강조) ----- */
 #compose {
   display: flex;
   gap: 10px;
@@ -279,31 +278,28 @@ body {
   border-top: 1px solid var(--border);
   flex-shrink: 0;
   align-items: flex-end;
-  /* 입력창 영역 구분감 추가 */
-  box-shadow: 0 -4px 20px rgba(0,0,0,0.03); 
-  z-index: 10;
 }
 
 #compose textarea {
   flex: 1;
   padding: 14px;
-  border-radius: 24px;
-  background: #f8f8f8;
-  border: 1px solid #ddd; /* 기본 테두리 */
+  border-radius: 20px;
+  /* 배경을 아예 회색으로 깔아서 흰 배경과 구분 */
+  background: #e9e9e9; 
+  border: 2px solid transparent; 
   resize: none;
-  min-height: 44px;
+  min-height: 48px; /* 높이 고정으로 안정감 줌 */
   max-height: 120px;
   font-family: inherit;
   font-size: 15px;
   outline: none;
-  transition: all 0.2s;
+  transition: background 0.2s, border-color 0.2s;
 }
 
-/* 입력창 클릭 시 두꺼운 검정 테두리 */
+/* 입력하려고 클릭하면 배경 흰색 + 검정 테두리로 강조 */
 #compose textarea:focus {
   background: #fff;
-  border: 2px solid #000; 
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  border-color: #000;
 }
 
 #compose input[type="file"] {
@@ -312,16 +308,16 @@ body {
 
 .file-label {
   cursor: pointer;
-  width: 44px;
-  height: 44px;
-  background: #fff; /* 흰색 배경 */
+  width: 48px; /* 버튼 크기 통일 */
+  height: 48px;
+  background: #fff;
   color: #000;
-  border: 1px solid #ccc; /* 테두리 추가 */
+  border: 1px solid #ccc;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
+  font-size: 20px;
   flex-shrink: 0;
   transition: all 0.2s;
 }
@@ -332,32 +328,25 @@ body {
 }
 
 #compose button {
-  height: 44px;
-  padding: 0 28px;
+  height: 48px; /* 높이 통일 */
+  padding: 0 24px;
   background: #000;
   color: #fff;
-  border: none;
+  border: 2px solid #000;
   border-radius: 24px;
   cursor: pointer;
   font-weight: 700;
   flex-shrink: 0;
   transition: all 0.2s;
-  /* 전송 버튼 입체감 */
-  box-shadow: 0 4px 8px rgba(0,0,0,0.25);
 }
 
+/* 전송 버튼 마우스 올리면 반전 (흰배경 검은글씨) */
 #compose button:hover {
-  background: #222;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(0,0,0,0.35);
+  background: #fff;
+  color: #000;
 }
 
-#compose button:active {
-  transform: translateY(0);
-}
-
-
-/* ----- DARK MODE (전체 색상 반전 방식) ----- */
+/* ----- DARK MODE ----- */
 html {
   transition: filter 0.3s ease;
 }
@@ -366,7 +355,6 @@ html.dark {
   filter: invert(100%) hue-rotate(180deg);
 }
 
-/* 반전 제외 요소들 */
 html.dark img,
 html.dark video,
 html.dark .logo {
