@@ -1,6 +1,6 @@
 :root{
-  --bg:#ffffff; /* 배경: 순백색 */
-  --accent:#222222; /* 포인트: 블랙 (가장 세련됨) */
+  --bg:#ffffff;       /* 배경: 순백색 */
+  --accent:#222222;   /* 포인트: 블랙 */
   --panel-bg:#f9f9f9; /* 사이드바: 아주 연한 회색 */
   --text:#111;
   --link:#000;
@@ -26,7 +26,7 @@ body {
   width:320px;
   background:var(--panel-bg);
   border-right: 1px solid var(--border);
-  padding:20px; /* 여백을 좀 더 넉넉하게 */
+  padding:20px;
   box-sizing:border-box;
   overflow-y:auto;
   flex-shrink:0;
@@ -42,22 +42,22 @@ body {
 .brand .logo{
   width:40px;
   height:40px;
-  background:#000; /* 로고 배경 검정 */
-  color: #fff;     /* 로고 글씨 흰색 */
-  border-radius:50%; /* 완전 원형 */
+  background:#000;
+  color: #fff;
+  border-radius:50%;
   display:flex;
   align-items:center;
   justify-content:center;
   font-weight:700;
   font-size: 18px;
-  font-family: 'Georgia', serif; /* 좀 더 우아한 폰트 */
+  font-family: 'Georgia', serif;
 }
 
 .brand .title{
   font-weight:800;
   font-size:20px;
-  letter-spacing: 1px; /* 자간을 넓혀서 세련되게 */
-  text-transform: uppercase; /* 대문자 고정 */
+  letter-spacing: 1px;
+  text-transform: uppercase;
 }
 
 .panel{
@@ -67,7 +67,7 @@ body {
 .panel input{
   width:100%;
   padding:12px;
-  border-radius:8px; /* 둥글기를 살짝 줄여서 모던하게 */
+  border-radius:8px;
   border:1px solid #ddd;
   margin-bottom:10px;
   box-sizing: border-box;
@@ -83,8 +83,8 @@ body {
 .panel button{
   padding:12px;
   border-radius:8px;
-  background:#000; /* 버튼 검정 */
-  color: #fff;     /* 글씨 흰색 */
+  background:#000;
+  color: #fff;
   border:none;
   cursor:pointer;
   font-weight: 600;
@@ -115,8 +115,8 @@ body {
   justify-content:space-between;
   align-items:center;
   cursor:pointer;
-  border:1px solid transparent; /* 테두리 없애고 */
-  box-shadow: 0 2px 5px rgba(0,0,0,0.03); /* 그림자 살짝 */
+  border:1px solid transparent;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.03);
   transition: all 0.2s;
 }
 
@@ -145,7 +145,7 @@ body {
 }
 
 #chatHeader{
-  height:70px; /* 헤더 조금 더 높게 */
+  height:70px;
   display:flex;
   align-items:center;
   justify-content:space-between;
@@ -158,6 +158,27 @@ body {
 #roomName {
   font-weight: 700;
   font-size: 18px;
+}
+
+/* 다크모드 버튼 스타일 (화이트/다크 모두 잘 보이게 수정됨) */
+#darkToggle {
+  background: transparent; /* 투명 배경 */
+  color: #000;             /* 아이콘 검정 */
+  border: 1px solid #ddd;  /* 얇은 테두리 */
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 18px;
+  transition: all 0.2s;
+}
+
+#darkToggle:hover {
+  background: #f0f0f0;
+  border-color: #000;
 }
 
 #messages{
@@ -175,7 +196,7 @@ body {
   max-width:65%;
   padding:12px 16px;
   border-radius:18px;
-  box-shadow: none; /* 그림자 제거 (플랫 디자인) */
+  box-shadow: none;
   white-space: pre-wrap;
   word-wrap: break-word;
   word-break: break-all;
@@ -196,8 +217,8 @@ body {
   flex-direction:column;
   align-items:flex-end;
   
-  background: #000; /* 검정 배경 */
-  color: #fff;      /* 흰색 텍스트 */
+  background: #000;
+  color: #fff;
   
   border-bottom-right-radius:2px;
   gap:4px;
@@ -210,8 +231,8 @@ body {
   flex-direction:column;
   align-items:flex-start;
   
-  background: #f2f2f2; /* 연회색 배경 */
-  color: #000;         /* 검정 텍스트 */
+  background: #f2f2f2;
+  color: #000;
   
   border-bottom-left-radius:2px;
   gap:4px;
@@ -223,7 +244,6 @@ body {
   margin-top:4px;
 }
 
-/* 내가 보낸 건 메타정보(시간)도 살짝 밝게 */
 .msg.me .meta {
   color: rgba(255,255,255,0.6);
 }
@@ -236,7 +256,7 @@ body {
 }
 
 .msg a {
-  color: inherit; /* 부모 색상 따름 */
+  color: inherit;
   text-decoration: underline;
   text-underline-offset: 3px;
 }
@@ -280,7 +300,7 @@ body {
   cursor:pointer;
   width: 44px;
   height: 44px;
-  background: #f4f4f4; /* 연회색 */
+  background: #f4f4f4;
   color: #000;
   border-radius:50%;
   display:flex;
@@ -298,7 +318,7 @@ body {
 #compose button{
   height: 44px;
   padding:0 24px;
-  background: #000; /* 전송 버튼 검정 */
+  background: #000;
   color: #fff;
   border:none;
   border-radius:24px;
@@ -312,72 +332,27 @@ body {
   opacity: 0.8;
 }
 
-/* ----- DARK MODE (BLANC의 다크모드는 'NOIR') ----- */
-.dark{
-  --bg:#111;
-  --panel-bg:#000;
-  --text:#fff;
-  --border:#333;
+
+/* ----- DARK MODE (전체 색상 반전 방식) ----- */
+html {
+  transition: filter 0.3s ease;
 }
 
-.dark #sidebar,
-.dark #chatHeader,
-.dark #compose {
-  background: #000;
-  border-color: #333;
+/* 다크모드 활성화 시 -> 화면 전체를 반전시킴 */
+/* 흰 배경은 검정이 되고, 검정 버튼은 흰색이 되어 잘 보임 */
+html.dark {
+  filter: invert(100%) hue-rotate(180deg);
 }
 
-.dark .roomItem{
-  background: #1a1a1a;
-  color: #fff;
-}
-.dark .roomItem:hover {
-  background: #252525;
-}
-
-.dark .panel input,
-.dark #compose textarea {
-  background: #222;
-  color: #fff;
-  border-color: #333;
+/* [중요] 반전에서 제외할 요소들 */
+/* 로고, 이미지, 비디오는 반전되면 이상하니까 다시 뒤집어서 원래대로 돌림 */
+html.dark img,
+html.dark video,
+html.dark .logo {
+  filter: invert(100%) hue-rotate(180deg);
 }
 
-.dark .msg.other {
-  background: #222;
-  color: #fff;
+/* 로고가 검정 배경에 묻히지 않도록 흰색 테두리 추가 */
+html.dark .logo {
+  box-shadow: 0 0 0 2px #fff;
 }
-
-.dark .msg.me {
-  background: #fff; /* 다크모드에선 '나'를 흰색으로 반전 (포인트) */
-  color: #000;
-}
-
-.dark .msg.me .meta {
-  color: rgba(0,0,0,0.6);
-}
-
-/* 다크모드 버튼 스타일 강화 */
-#darkToggle {
-  background: #000;      /* 배경: 검정 */
-  color: #fff;           /* 아이콘: 흰색 */
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;    /* 동그랗게 */
-  border: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: transform 0.2s;
-  
-  /* 위치나 마진은 기존 레이아웃에 맞춤 */
-  font-size: 18px;
-}
-
-#darkToggle:hover {
-  transform: scale(1.1); /* 마우스 올리면 살짝 커짐 */
-}
-
-/* [중요] 다크모드일 때 버튼은 반전에서 제외할지 말지 결정 */
-/* 이 버튼은 그냥 놔두면 반전되어 '흰색 배경에 검정 아이콘'이 되어 잘 보입니다. */
-/* 따라서 html.dark .logo 처럼 별도로 filter 코드를 추가할 필요가 없습니다. */
