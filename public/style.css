@@ -1,7 +1,7 @@
 :root{
   --bg:#ffffff;       /* 배경: 순백색 */
   --accent:#222222;   /* 포인트: 블랙 */
-  --panel-bg:#e0e0e0; /* 사이드바: 아주 연한 회색 */
+  --panel-bg:#f9f9f9; /* 사이드바: 아주 연한 회색 */
   --text:#111;
   --link:#000;
   --border:#eee;
