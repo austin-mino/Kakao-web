@@ -57,9 +57,7 @@ function logout() {
 /* 서버 요청 도우미 */
 function request(path, opts = {}) {
   opts.headers = opts.headers || {};
-  if (token) {
-    opts.headers["Authorization"] = "Bearer " + token;
-  }
+  if (token) opts.headers["Authorization"] = "Bearer " + token;
   return fetch("/" + path.replace(/^\//, ''), opts).then(res => res.json());
 }
 
@@ -77,11 +75,8 @@ btnLogin.onclick = async () => {
     body: JSON.stringify({ username, password })
   });
 
-  if (res.ok) {
-    setAuth(res.token, res.username);
-  } else {
-    alert(res.error || "로그인 실패");
-  }
+  if (res.ok) setAuth(res.token, res.username);
+  else alert(res.error || "로그인 실패");
 };
 
 /* --------------------------------------------------
@@ -98,13 +93,9 @@ btnRegister.onclick = async () => {
     body: JSON.stringify({ username, password })
   });
 
-  if (res.ok) {
-    alert("회원가입 성공! 이제 로그인하세요.");
-  } else {
-    alert(res.error || "회원가입 실패");
-  }
+  if (res.ok) alert("회원가입 성공! 이제 로그인하세요.");
+  else alert(res.error || "회원가입 실패");
 };
-
 
 /* --------------------------------------------------
    🔥 방 목록 불러오기
@@ -132,17 +123,15 @@ async function loadRooms() {
 }
 
 /* --------------------------------------------------
-  🔥 모바일 터치 중복 방지
+  🔥 방 클릭/모바일 중복 방지
 ----------------------------------------------------- */
 let roomOpening = false;
-roomsList.addEventListener("click", async (e) => {
+roomsList.addEventListener("click", async e => {
   if (roomOpening) return;
-
   const item = e.target.closest(".roomItem");
   if (!item) return;
 
   roomOpening = true;
-
   openRoom(item.dataset.id, item.dataset.name)
     .finally(() => (roomOpening = false));
 });
@@ -169,7 +158,7 @@ async function openRoom(id, name) {
 }
 
 /* --------------------------------------------------
-  🔥 방 생성
+  🔥 새 방 생성
 ----------------------------------------------------- */
 newRoomBtn.onclick = async () => {
   const name = prompt("새 채팅방 이름을 입력하세요.");
@@ -244,7 +233,7 @@ async function sendMessage() {
 sendBtn.onclick = sendMessage;
 
 /* Enter 키 전송 */
-textInput.addEventListener("keydown", (e) => {
+textInput.addEventListener("keydown", e => {
   if (e.key === "Enter") {
     e.preventDefault();
     if (!e.repeat) sendMessage();
@@ -255,9 +244,7 @@ textInput.addEventListener("keydown", (e) => {
   🔥 실시간 메시지 수신
 ----------------------------------------------------- */
 socket.on("new_message", ({ roomId, message }) => {
-  if (roomId == currentRoom) {
-    renderMessage(message);
-  }
+  if (roomId == currentRoom) renderMessage(message);
 });
 
 /* --------------------------------------------------
