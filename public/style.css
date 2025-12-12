@@ -1,10 +1,10 @@
 :root{
-  --bg:#f2f2f2;
-  --accent:#fdd835; /* 카카오톡 노란색 */
-  --panel-bg:#fff;
+  --bg:#ffffff; /* 배경: 순백색 */
+  --accent:#222222; /* 포인트: 블랙 (가장 세련됨) */
+  --panel-bg:#f9f9f9; /* 사이드바: 아주 연한 회색 */
   --text:#111;
-  --link:#0645AD;
-  --link-dark:#4ea1f0;
+  --link:#000;
+  --border:#eee;
 }
 
 body {
@@ -21,12 +21,12 @@ body {
   overflow:hidden;
 }
 
-/* ----- SIDEBAR (왼쪽 목록) ----- */
+/* ----- SIDEBAR ----- */
 #sidebar{
   width:320px;
   background:var(--panel-bg);
-  box-shadow:1px 0 6px rgba(0,0,0,0.08);
-  padding:12px;
+  border-right: 1px solid var(--border);
+  padding:20px; /* 여백을 좀 더 넉넉하게 */
   box-sizing:border-box;
   overflow-y:auto;
   flex-shrink:0;
@@ -35,47 +35,64 @@ body {
 .brand{
   display:flex;
   align-items:center;
-  gap:10px;
-  margin-bottom:12px;
+  gap:12px;
+  margin-bottom:24px;
 }
 
 .brand .logo{
-  width:44px;
-  height:44px;
-  border-radius:8px;
-  background:var(--accent);
+  width:40px;
+  height:40px;
+  background:#000; /* 로고 배경 검정 */
+  color: #fff;     /* 로고 글씨 흰색 */
+  border-radius:50%; /* 완전 원형 */
   display:flex;
   align-items:center;
   justify-content:center;
   font-weight:700;
+  font-size: 18px;
+  font-family: 'Georgia', serif; /* 좀 더 우아한 폰트 */
 }
 
 .brand .title{
-  font-weight:700;
-  font-size:18px;
+  font-weight:800;
+  font-size:20px;
+  letter-spacing: 1px; /* 자간을 넓혀서 세련되게 */
+  text-transform: uppercase; /* 대문자 고정 */
 }
 
 .panel{
   margin-top:12px;
-  padding:8px;
-  background:transparent;
 }
 
 .panel input{
   width:100%;
-  padding:10px;
-  border-radius:10px;
+  padding:12px;
+  border-radius:8px; /* 둥글기를 살짝 줄여서 모던하게 */
   border:1px solid #ddd;
-  margin-bottom:8px;
-  box-sizing: border-box; /* 패딩 포함 크기 계산 */
+  margin-bottom:10px;
+  box-sizing: border-box;
+  background: #fff;
+  transition: border-color 0.2s;
+}
+
+.panel input:focus{
+  outline: none;
+  border-color: #000;
 }
 
 .panel button{
-  padding:8px 12px;
+  padding:12px;
   border-radius:8px;
-  background:var(--accent);
+  background:#000; /* 버튼 검정 */
+  color: #fff;     /* 글씨 흰색 */
   border:none;
   cursor:pointer;
+  font-weight: 600;
+  transition: opacity 0.2s;
+}
+
+.panel button:hover{
+  opacity: 0.8;
 }
 
 .hidden{
@@ -84,249 +101,257 @@ body {
 
 /* ----- ROOM LIST ----- */
 #roomsList{
-  margin-top:8px;
+  margin-top:12px;
   display:flex;
   flex-direction:column;
   gap:8px;
 }
 
 .roomItem{
-  padding:10px;
-  border-radius:10px;
-  background:#fafafa;
+  padding:14px;
+  border-radius:8px;
+  background:#fff;
   display:flex;
   justify-content:space-between;
   align-items:center;
   cursor:pointer;
-  border:1px solid #eee;
-  transition:background 0.15s;
+  border:1px solid transparent; /* 테두리 없애고 */
+  box-shadow: 0 2px 5px rgba(0,0,0,0.03); /* 그림자 살짝 */
+  transition: all 0.2s;
 }
 
 .roomItem:hover{
-  background:#f0f0f0;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.05);
 }
 
 .roomItem .name{
   font-weight:600;
+  font-size: 15px;
 }
 
 .roomItem .meta{
-  font-size:12px;
-  color:#666;
+  font-size:11px;
+  color:#888;
 }
 
-/* ----- MAIN CHAT AREA (오른쪽 채팅창) ----- */
+/* ----- MAIN CHAT AREA ----- */
 #main{
   flex:1;
   display:flex;
   flex-direction:column;
   position:relative;
-  overflow:hidden;
+  background: #fff;
 }
 
 #chatHeader{
-  height:60px;
+  height:70px; /* 헤더 조금 더 높게 */
   display:flex;
   align-items:center;
   justify-content:space-between;
-  padding:0 16px;
-  background:var(--panel-bg);
-  box-shadow:0 1px 6px rgba(0,0,0,0.05);
+  padding:0 24px;
+  background:#fff;
+  border-bottom: 1px solid var(--border);
   flex-shrink:0;
 }
 
-/* 메시지 목록 영역 */
+#roomName {
+  font-weight: 700;
+  font-size: 18px;
+}
+
 #messages{
   flex:1;
   overflow-y:auto;
-  padding:18px;
+  padding:24px;
   background:var(--bg);
   display:flex;
-  flex-direction:column; /* 세로 정렬 */
-  gap:8px;
+  flex-direction:column;
+  gap:12px;
 }
 
-/* ----- MESSAGE BUBBLES 공통 ----- */
+/* ----- BUBBLES ----- */
 .bubble {
-  max-width:70%;
-  padding:10px 14px;
-  border-radius:16px;
-  box-shadow:0 1px 3px rgba(0,0,0,0.06);
-  display:block;
-  
-  /* 줄바꿈 및 단어 끊기 설정 (핵심 수정 사항) */
-  white-space: pre-wrap; /* 엔터(\n)를 줄바꿈으로 인식 */
+  max-width:65%;
+  padding:12px 16px;
+  border-radius:18px;
+  box-shadow: none; /* 그림자 제거 (플랫 디자인) */
+  white-space: pre-wrap;
   word-wrap: break-word;
   word-break: break-all;
-  
-  font-size: 14px;
-  line-height: 1.4;
+  font-size: 15px;
+  line-height: 1.5;
   animation: fade-in 0.2s ease;
 }
 
 @keyframes fade-in {
-  from { opacity:0; transform: translateY(4px); }
+  from { opacity:0; transform: translateY(5px); }
   to { opacity:1; transform: translateY(0); }
 }
 
-/* 내가 보낸 메시지 (오른쪽) */
+/* 내 메시지 (Black & White) */
 .msg.me {
-  /* 오른쪽 정렬 (핵심 수정 사항) */
   align-self: flex-end;
-  
   display:flex;
   flex-direction:column;
   align-items:flex-end;
   
-  background: var(--accent);
-  color:#000;
+  background: #000; /* 검정 배경 */
+  color: #fff;      /* 흰색 텍스트 */
   
-  /* 말풍선 꼬리 모양 */
   border-bottom-right-radius:2px;
-  
   gap:4px;
-  padding:8px 12px;
-  transition: all 0.2s ease;
 }
 
-/* 상대 메시지 (왼쪽) */
+/* 상대 메시지 (Gray) */
 .msg.other {
-  /* 왼쪽 정렬 */
   align-self: flex-start;
-  
   display:flex;
   flex-direction:column;
   align-items:flex-start;
   
-  background:#fff;
-  color:#000;
+  background: #f2f2f2; /* 연회색 배경 */
+  color: #000;         /* 검정 텍스트 */
   
-  /* 말풍선 꼬리 모양 */
   border-bottom-left-radius:2px;
-  
   gap:4px;
-  padding:8px 12px;
-  transition: all 0.2s ease;
 }
 
-/* 메시지 메타 정보 (이름, 시간) */
 .msg .meta {
   font-size:11px;
-  color:#666;
-  margin-top:2px;
-  opacity:0.8;
+  color:#999;
+  margin-top:4px;
 }
 
-/* 메시지 이미지 */
+/* 내가 보낸 건 메타정보(시간)도 살짝 밝게 */
+.msg.me .meta {
+  color: rgba(255,255,255,0.6);
+}
+
 .msg img {
   max-width:100%;
-  border-radius:8px;
+  border-radius:12px;
   display:block;
   margin-bottom: 4px;
 }
 
-/* 하이퍼링크 */
 .msg a {
-  color:var(--link);
-  text-decoration:underline;
-  word-break: break-all;
+  color: inherit; /* 부모 색상 따름 */
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
-/* ----- MESSAGE COMPOSE AREA (입력창) ----- */
+/* ----- COMPOSE ----- */
 #compose{
   display:flex;
-  gap:8px;
-  padding:12px;
-  background:var(--panel-bg);
-  border-top:1px solid #eee;
+  gap:10px;
+  padding:20px;
+  background:#fff;
+  border-top:1px solid var(--border);
   flex-shrink:0;
   align-items:flex-end;
 }
 
-/* textarea */
 #compose textarea{
   flex:1;
-  padding:10px;
-  border-radius:20px;
-  border:1px solid #ddd;
+  padding:14px;
+  border-radius:24px;
+  background: #f4f4f4;
+  border:1px solid transparent;
   resize:none;
-  min-height:40px; /* 높이 약간 조정 */
+  min-height:44px;
   max-height:120px;
-  overflow-y:auto;
   font-family:inherit;
-  font-size:14px;
-  outline: none; /* 포커스 시 테두리 제거 */
+  font-size:15px;
+  outline: none;
+  transition: background 0.2s;
 }
 
-/* 파일 선택 input 숨김 (핵심 수정 사항) */
+#compose textarea:focus {
+  background: #fff;
+  border-color: #ddd;
+}
+
 #compose input[type="file"]{
-  display:none !important; /* 화면에서 완전히 숨김 */
+  display:none !important;
 }
 
-/* 클립 아이콘 버튼 */
 .file-label{
   cursor:pointer;
-  width: 40px;
-  height: 40px;
-  background:var(--accent);
-  border-radius:50%; /* 동그랗게 */
+  width: 44px;
+  height: 44px;
+  background: #f4f4f4; /* 연회색 */
+  color: #000;
+  border-radius:50%;
   display:flex;
   align-items:center;
   justify-content:center;
   font-size:18px;
   flex-shrink: 0;
+  transition: background 0.2s;
 }
 
-/* 전송 버튼 */
+.file-label:hover {
+  background: #e0e0e0;
+}
+
 #compose button{
-  height: 40px;
-  padding:0 20px;
-  background:var(--accent);
+  height: 44px;
+  padding:0 24px;
+  background: #000; /* 전송 버튼 검정 */
+  color: #fff;
   border:none;
-  border-radius:20px;
+  border-radius:24px;
   cursor:pointer;
   font-weight: 600;
   flex-shrink: 0;
+  transition: opacity 0.2s;
 }
 
-#compose button:hover,
-.file-label:hover {
-  opacity: 0.9;
+#compose button:hover{
+  opacity: 0.8;
 }
 
-
-/* ----- DARK MODE ----- */
+/* ----- DARK MODE (BLANC의 다크모드는 'NOIR') ----- */
 .dark{
   --bg:#111;
-  --panel-bg:#141414;
-  --text:#eaeaea;
-  --link:#4ea1f0;
+  --panel-bg:#000;
+  --text:#fff;
+  --border:#333;
+}
+
+.dark #sidebar,
+.dark #chatHeader,
+.dark #compose {
+  background: #000;
+  border-color: #333;
 }
 
 .dark .roomItem{
-  background:#1e1e1e;
-  border-color:#222;
+  background: #1a1a1a;
+  color: #fff;
+}
+.dark .roomItem:hover {
+  background: #252525;
 }
 
-.dark .roomItem:hover{
-  background:#2a2a2a;
-}
-
-.dark .msg.other{
-  background:#1b1b1b;
-  color:#eee;
-}
-
-.dark .msg.me{
-  background:#f5d04a;
-  color:#111;
-}
-
-.dark .msg a {
-  color:var(--link);
-}
+.dark .panel input,
 .dark #compose textarea {
   background: #222;
   color: #fff;
   border-color: #333;
+}
+
+.dark .msg.other {
+  background: #222;
+  color: #fff;
+}
+
+.dark .msg.me {
+  background: #fff; /* 다크모드에선 '나'를 흰색으로 반전 (포인트) */
+  color: #000;
+}
+
+.dark .msg.me .meta {
+  color: rgba(0,0,0,0.6);
 }
