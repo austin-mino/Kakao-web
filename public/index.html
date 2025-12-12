@@ -40,6 +40,7 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    font-size: 18px;
   }
 
   /* 숨겨진 파일 input */
@@ -88,7 +89,7 @@
       <!-- 메시지 입력 -->
       <div id="compose" class="hidden">
         <input id="textInput" placeholder="메시지 입력..." autocomplete="off" />
-        <label for="imageInput" class="file-label">📎</label>
+        <label for="imageInput" class="file-label" title="이미지 첨부">📎</label>
         <input id="imageInput" type="file" accept="image/*" />
         <button id="sendBtn" type="button">전송</button>
       </div>
