@@ -115,7 +115,7 @@ body {
   justify-content:space-between;
   align-items:center;
   cursor:pointer;
-  border:1px solid transparent;
+  border:1px solid #cccccc;
   box-shadow: 0 2px 5px rgba(0,0,0,0.03);
   transition: all 0.2s;
 }
@@ -289,7 +289,7 @@ body {
 
 #compose textarea:focus {
   background: #fff;
-  border-color: #ddd;
+  border-color: #cccccc;
 }
 
 #compose input[type="file"]{
