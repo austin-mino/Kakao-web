@@ -2,6 +2,13 @@ const API = '';
 let token = localStorage.getItem("token") || null;
 let user = localStorage.getItem("user") || null;
 
+// 브라우저별 고유 deviceId 생성
+let deviceId = localStorage.getItem("deviceId");
+if (!deviceId) {
+  deviceId = crypto.randomUUID();
+  localStorage.setItem("deviceId", deviceId);
+}
+
 const socket = io();
 const el = id => document.getElementById(id);
 
@@ -28,13 +35,10 @@ const sendBtn = el('sendBtn');
 
 let currentRoom = null;
 
-/* --------------------------------------------------
-      🔐 로그인 처리
------------------------------------------------------ */
+/* ------------------------- 로그인 처리 ------------------------- */
 function setAuth(t, u) {
   token = t;
   user = u;
-
   localStorage.setItem("token", t);
   localStorage.setItem("user", u);
 
@@ -54,16 +58,14 @@ function logout() {
   roomsPanel.classList.add('hidden');
 }
 
-/* 서버 요청 도우미 */
+/* 서버 요청 */
 function request(path, opts = {}) {
   opts.headers = opts.headers || {};
   if (token) opts.headers["Authorization"] = "Bearer " + token;
   return fetch("/" + path.replace(/^\//, ''), opts).then(res => res.json());
 }
 
-/* --------------------------------------------------
-   🔑 로그인 버튼
------------------------------------------------------ */
+/* ------------------------- 로그인 / 회원가입 ------------------------- */
 btnLogin.onclick = async () => {
   const username = usernameInput.value.trim();
   const password = passwordInput.value.trim();
@@ -79,9 +81,6 @@ btnLogin.onclick = async () => {
   else alert(res.error || "로그인 실패");
 };
 
-/* --------------------------------------------------
-   🆕 회원가입 버튼
------------------------------------------------------ */
 btnRegister.onclick = async () => {
   const username = usernameInput.value.trim();
   const password = passwordInput.value.trim();
@@ -97,9 +96,7 @@ btnRegister.onclick = async () => {
   else alert(res.error || "회원가입 실패");
 };
 
-/* --------------------------------------------------
-   🔥 방 목록 불러오기
------------------------------------------------------ */
+/* ------------------------- 방 목록 ------------------------- */
 async function loadRooms() {
   const res = await request("api/rooms");
   roomsList.innerHTML = "";
@@ -117,14 +114,11 @@ async function loadRooms() {
         <div class="meta">#${r.id}</div>
       </div>
     `;
-
     roomsList.appendChild(item);
   });
 }
 
-/* --------------------------------------------------
-  🔥 방 클릭/모바일 중복 방지
------------------------------------------------------ */
+/* ------------------------- 방 클릭 ------------------------- */
 let roomOpening = false;
 roomsList.addEventListener("click", async e => {
   if (roomOpening) return;
@@ -136,13 +130,10 @@ roomsList.addEventListener("click", async e => {
     .finally(() => (roomOpening = false));
 });
 
-/* --------------------------------------------------
-  🔥 방 열기
------------------------------------------------------ */
+/* ------------------------- 방 열기 ------------------------- */
 async function openRoom(id, name) {
   currentRoom = id;
   roomNameEl.textContent = name;
-
   chatHeader.classList.remove("hidden");
   compose.classList.remove("hidden");
   messagesEl.innerHTML = "";
@@ -157,9 +148,7 @@ async function openRoom(id, name) {
   }
 }
 
-/* --------------------------------------------------
-  🔥 새 방 생성
------------------------------------------------------ */
+/* ------------------------- 새 방 생성 ------------------------- */
 newRoomBtn.onclick = async () => {
   const name = prompt("새 채팅방 이름을 입력하세요.");
   if (!name || !name.trim()) return;
@@ -174,9 +163,7 @@ newRoomBtn.onclick = async () => {
   else alert(res.error || "방 생성 실패");
 };
 
-/* --------------------------------------------------
-  🔥 메시지 렌더링 (중복 방지 + 링크 자동 변환)
------------------------------------------------------ */
+/* ------------------------- 메시지 렌더링 ------------------------- */
 const renderCache = new Set();
 
 function linkify(text) {
@@ -189,22 +176,21 @@ function renderMessage(m) {
   renderCache.add(m.id);
 
   const div = document.createElement("div");
-  div.className = "msg bubble " + (m.user === user ? "me" : "other");
+  // deviceId 기준 오른쪽/왼쪽
+  div.className = "msg bubble " + (m.deviceId === deviceId ? "me" : "other");
 
   let html = "";
   if (m.text) html += `<div class="text">${linkify(escapeHtml(m.text))}</div>`;
   if (m.image) html += `<img src="/api/image/${m.image}" />`;
 
-  html += `<div class="meta">${new Date(m.ts).toLocaleTimeString()} - ${m.user}</div>`;
+  html += `<div class="meta">${new Date(m.ts).toLocaleTimeString()} - ${escapeHtml(m.user)}</div>`;
   div.innerHTML = html;
 
   messagesEl.appendChild(div);
   scrollBottom();
 }
 
-/* --------------------------------------------------
-  🔥 메시지 전송
------------------------------------------------------ */
+/* ------------------------- 메시지 전송 ------------------------- */
 async function sendMessage() {
   if (!currentRoom) return alert("방을 선택하세요.");
 
@@ -216,6 +202,7 @@ async function sendMessage() {
   const form = new FormData();
   form.append("text", text);
   if (image) form.append("image", image);
+  form.append("deviceId", deviceId); // deviceId 전송
 
   const res = await fetch(`/api/rooms/${currentRoom}/messages`, {
     method: "POST",
@@ -231,8 +218,6 @@ async function sendMessage() {
 }
 
 sendBtn.onclick = sendMessage;
-
-/* Enter 키 전송 */
 textInput.addEventListener("keydown", e => {
   if (e.key === "Enter") {
     e.preventDefault();
@@ -240,23 +225,15 @@ textInput.addEventListener("keydown", e => {
   }
 });
 
-/* --------------------------------------------------
-  🔥 실시간 메시지 수신
------------------------------------------------------ */
+/* ------------------------- 실시간 메시지 수신 ------------------------- */
 socket.on("new_message", ({ roomId, message }) => {
   if (roomId == currentRoom) renderMessage(message);
 });
 
-/* --------------------------------------------------
-  🔥 다크모드
------------------------------------------------------ */
-darkToggle.onclick = () => {
-  document.body.classList.toggle("dark");
-};
+/* ------------------------- 다크모드 ------------------------- */
+darkToggle.onclick = () => document.body.classList.toggle("dark");
 
-/* --------------------------------------------------
-  Helpers
------------------------------------------------------ */
+/* ------------------------- Helpers ------------------------- */
 function escapeHtml(s) {
   return s
     ? s.replace(/[&<>"']/g, c => ({
