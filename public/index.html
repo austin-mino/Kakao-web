@@ -31,6 +31,17 @@
     cursor: pointer;
   }
 
+  /* 메시지 입력 textarea */
+  #textInput {
+    flex: 1;
+    padding: 10px;
+    border-radius: 20px;
+    border: 1px solid #ddd;
+    resize: none;
+    font-family: inherit;
+    font-size: 14px;
+  }
+
   /* 파일 입력 아이콘 스타일링 */
   .file-label {
     cursor: pointer;
@@ -87,8 +98,8 @@
       <div id="messages"></div>
 
       <!-- 메시지 입력 -->
-      <div id="compose" class="hidden">
-        <input id="textInput" placeholder="메시지 입력..." autocomplete="off" />
+      <div id="compose" class="hidden" style="display:flex; gap:8px; padding:12px; background:var(--panel-bg); border-top:1px solid #eee;">
+        <textarea id="textInput" placeholder="메시지 입력..." rows="2"></textarea>
         <label for="imageInput" class="file-label" title="이미지 첨부">📎</label>
         <input id="imageInput" type="file" accept="image/*" />
         <button id="sendBtn" type="button">전송</button>
@@ -98,5 +109,27 @@
 
 <script src="/socket.io/socket.io.js"></script>
 <script src="/app.js"></script>
+<script>
+  // Shift+Enter 줄 바꿈, Enter 전송
+  const textInput = document.getElementById('textInput');
+  const sendBtn = document.getElementById('sendBtn');
+
+  textInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      if (e.shiftKey) {
+        // Shift+Enter → 줄 바꿈
+        const start = textInput.selectionStart;
+        const end = textInput.selectionEnd;
+        textInput.value = textInput.value.substring(0, start) + "\n" + textInput.value.substring(end);
+        textInput.selectionStart = textInput.selectionEnd = start + 1;
+        e.preventDefault();
+      } else {
+        // Enter → 전송
+        e.preventDefault();
+        sendBtn.click();
+      }
+    }
+  });
+</script>
 </body>
 </html>
