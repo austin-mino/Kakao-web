@@ -147,7 +147,7 @@ body {
   margin-bottom:10px;
   box-shadow:0 1px 3px rgba(0,0,0,0.06);
   display:block;
-  word-wrap: break-word; /* 긴 링크 자동 줄바꿈 */
+  word-wrap: break-word;
 }
 
 /* 내가 보낸 메시지 — 오른쪽 노란색 */
@@ -201,6 +201,7 @@ body {
 .msg a {
   color:#0645AD;
   text-decoration:underline;
+  word-break: break-word;
 }
 
 /* ----- MESSAGE COMPOSE AREA ----- */
