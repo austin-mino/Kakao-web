@@ -32,6 +32,10 @@ const passwordInput = el('password');
 const btnLogin = el('btnLogin');
 const btnRegister = el('btnRegister');
 
+// ★ [수정] 모바일 화면 전환을 위해 sidebar와 main 가져오기
+const sidebar = el('sidebar'); 
+const main = el('main');
+
 const roomsPanel = el('roomsPanel');
 const roomsList = el('roomsList');
 const newRoomBtn = el('newRoomBtn');
@@ -64,7 +68,6 @@ function setAuth(t, u) {
   // [핵심 수정 2] 아이디 화면에 즉시 반영
   if (myIdDisplay) {
     myIdDisplay.textContent = u;
-    // 혹시라도 비어있으면 다시 채움
     if(myIdDisplay.innerText === "") myIdDisplay.innerText = u;
   }
 
@@ -95,6 +98,10 @@ function logout() {
   
   if (usernameInput) usernameInput.value = "";
   if (passwordInput) passwordInput.value = "";
+
+  // ★ [수정] 로그아웃 시 모바일 화면 초기화 (목록 보이기)
+  if (sidebar) sidebar.classList.remove('hidden');
+  if (main) main.classList.add('hidden');
 }
 
 // [핵심 수정 3] 페이지 로드 시 상태 결정
@@ -196,10 +203,16 @@ if (roomsList) {
       if (res.ok || res.status === 200) {
         loadRooms();
         if (currentRoom == roomId) {
+          // 삭제된 방에 있었다면 나가기
           chatHeader.classList.add("hidden");
           compose.classList.add("hidden");
           messagesEl.innerHTML = "";
           currentRoom = null;
+          // ★ [수정] 모바일이면 목록으로 돌아오기
+          if (window.innerWidth <= 768) {
+             if(sidebar) sidebar.classList.remove('hidden');
+             if(main) main.classList.add('hidden');
+          }
         }
       } else {
         alert("삭제 실패");
@@ -226,6 +239,12 @@ async function openRoom(id, name) {
   compose.classList.remove("hidden");
   messagesEl.innerHTML = "";
 
+  // ★ [수정] 모바일: 방을 누르면 사이드바 숨기고 메인 채팅방 보여주기
+  if (window.innerWidth <= 768) {
+    if (sidebar) sidebar.classList.add('hidden'); // 목록 숨김
+    if (main) main.classList.remove('hidden');    // 채팅방 보임
+  }
+
   socket.emit("join_room", id);
 
   const res = await request(`api/rooms/${id}/messages`);
@@ -236,6 +255,18 @@ async function openRoom(id, name) {
   } else {
     if(res.error === "Unauthorized") logout();
   }
+}
+
+// ★ [수정] 모바일 뒤로가기 기능 (방 제목 누르면 목록으로)
+if (roomNameEl) {
+  roomNameEl.onclick = () => {
+    // 화면 폭이 768px 이하(모바일)일 때만 작동
+    if (window.innerWidth <= 768) {
+      if (sidebar) sidebar.classList.remove('hidden'); // 목록 보임
+      if (main) main.classList.add('hidden');    // 채팅방 숨김
+      currentRoom = null; // 방 나가기 처리
+    }
+  };
 }
 
 /* ------------------------- 새 방 만들기 ------------------------- */
