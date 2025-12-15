@@ -10,9 +10,9 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const jwt = require('jsonwebtoken');
-const { Pool } = require('pg'); // ★ sqlite3 대신 pg 사용
+const { Pool } = require('pg');
 const bcrypt = require('bcryptjs');
-require('dotenv').config(); // 로컬 테스트용 (Render에서는 환경변수 설정으로 대체)
+require('dotenv').config();
 
 //------------------------------------------------------------
 //  Config
@@ -20,22 +20,19 @@ require('dotenv').config(); // 로컬 테스트용 (Render에서는 환경변수
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'your_super_secret_key_change_this';
 
-// ★ Supabase 연결 설정
-// Render 환경변수에 DATABASE_URL을 넣어야 합니다.
+// DB 연결 설정
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: {
-    rejectUnauthorized: false, // Supabase 연결 시 필수 옵션
+    rejectUnauthorized: false,
   },
 });
 
 const UPLOAD_DIR = path.join(__dirname, 'uploads');
-
-// 업로드 폴더 없으면 생성 (주의: Render 무료버전은 재배포 시 이 폴더가 초기화됨)
 if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR);
 
 //------------------------------------------------------------
-//  Multer (이미지 업로드 설정)
+//  Multer
 //------------------------------------------------------------
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, UPLOAD_DIR),
@@ -47,11 +44,10 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 //------------------------------------------------------------
-//  Database Initialization (PostgreSQL)
+//  DB Init
 //------------------------------------------------------------
 const initDB = async () => {
   try {
-    // 사용자 테이블
     await pool.query(`
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
@@ -59,8 +55,6 @@ const initDB = async () => {
         password TEXT NOT NULL
       )
     `);
-
-    // 채팅방 테이블
     await pool.query(`
       CREATE TABLE IF NOT EXISTS rooms (
         id SERIAL PRIMARY KEY,
@@ -68,8 +62,6 @@ const initDB = async () => {
         created_at BIGINT
       )
     `);
-
-    // 메시지 테이블
     await pool.query(`
       CREATE TABLE IF NOT EXISTS messages (
         id SERIAL PRIMARY KEY,
@@ -81,16 +73,15 @@ const initDB = async () => {
         read_by TEXT
       )
     `);
-    console.log("✅ Database Tables Created/Verified");
+    console.log("✅ Database Tables Ready");
   } catch (err) {
-    console.error("❌ Database Init Error:", err);
+    console.error("❌ DB Init Error:", err);
   }
 };
-
 initDB();
 
 //------------------------------------------------------------
-//  Express + Socket.IO 설정
+//  Express + Socket
 //------------------------------------------------------------
 const app = express();
 const server = http.createServer(app);
@@ -98,65 +89,56 @@ const io = new Server(server, { cors: { origin: '*' } });
 
 app.use(cors());
 app.use(bodyParser.json());
-
-// 정적 파일 연결
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/api/image', express.static(UPLOAD_DIR));
 
 //------------------------------------------------------------
-//  JWT Helper
+//  Helpers
 //------------------------------------------------------------
 const signToken = (payload) => jwt.sign(payload, JWT_SECRET, { expiresIn: '30d' });
-
 const verifyToken = (req) => {
   const authHeader = req.headers.authorization;
   if (!authHeader) return null;
   const token = authHeader.replace('Bearer ', '');
-  try {
-    return jwt.verify(token, JWT_SECRET);
-  } catch (e) {
-    return null;
+  try { return jwt.verify(token, JWT_SECRET); } catch (e) { return null; }
+};
+
+// ★ [중요] 시간을 강제로 숫자로 바꾸는 함수
+const fixTime = (obj) => {
+  if (obj && obj.ts) {
+    obj.ts = parseInt(obj.ts); // 문자를 숫자로 변환
   }
+  return obj;
 };
 
 //------------------------------------------------------------
-//  API: 회원가입
+//  API Routes
 //------------------------------------------------------------
 app.post('/api/register', async (req, res) => {
   const { username, password } = req.body;
   if (!username || !password) return res.json({ ok: false, error: '정보 부족' });
 
   try {
-    // 중복 체크
     const userCheck = await pool.query('SELECT * FROM users WHERE username = $1', [username]);
-    if (userCheck.rows.length > 0) {
-      return res.json({ ok: false, error: '이미 존재하는 아이디입니다.' });
-    }
+    if (userCheck.rows.length > 0) return res.json({ ok: false, error: '이미 존재' });
 
-    // 암호화 및 저장
     const hashed = await bcrypt.hash(password, 10);
     await pool.query('INSERT INTO users (username, password) VALUES ($1, $2)', [username, hashed]);
-    
     res.json({ ok: true });
   } catch (err) {
     res.json({ ok: false, error: err.message });
   }
 });
 
-//------------------------------------------------------------
-//  API: 로그인
-//------------------------------------------------------------
 app.post('/api/login', async (req, res) => {
   const { username, password } = req.body;
-
   try {
     const result = await pool.query('SELECT * FROM users WHERE username = $1', [username]);
     const user = result.rows[0];
-
-    if (!user) return res.status(401).json({ ok: false, error: '아이디가 없습니다.' });
+    if (!user) return res.status(401).json({ ok: false, error: '아이디 없음' });
 
     const match = await bcrypt.compare(password, user.password);
-    if (!match) return res.status(401).json({ ok: false, error: '비밀번호가 틀렸습니다.' });
+    if (!match) return res.status(401).json({ ok: false, error: '비번 틀림' });
 
     const token = signToken({ username: user.username, id: user.id });
     res.json({ ok: true, token, username: user.username });
@@ -165,9 +147,6 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
-//------------------------------------------------------------
-//  API: 방 목록 / 생성 / 삭제
-//------------------------------------------------------------
 app.get('/api/rooms', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM rooms ORDER BY id DESC');
@@ -180,38 +159,30 @@ app.get('/api/rooms', async (req, res) => {
 app.post('/api/rooms', async (req, res) => {
   const { name } = req.body;
   if (!name) return;
-
   try {
     const now = Date.now();
-    // RETURNING * 을 사용해 생성된 데이터를 바로 받아옴 (Postgres 특징)
     const result = await pool.query(
       'INSERT INTO rooms (name, created_at) VALUES ($1, $2) RETURNING *',
       [name, now]
     );
     res.json({ ok: true, room: result.rows[0] });
   } catch (err) {
-    res.json({ ok: false, error: '방 생성 실패 (중복된 이름 등)' });
+    res.json({ ok: false, error: '생성 실패' });
   }
 });
 
 app.delete('/api/rooms/:id', async (req, res) => {
   const roomId = req.params.id;
   try {
-    // ON DELETE CASCADE 설정이 테이블에 없다면 메시지 먼저 삭제 필요하지만,
-    // 안전하게 트랜잭션 없이 순차 삭제 진행
     await pool.query('DELETE FROM messages WHERE room_id = $1', [roomId]);
     await pool.query('DELETE FROM rooms WHERE id = $1', [roomId]);
-    
     io.emit('room_deleted', { roomId });
     res.json({ ok: true });
   } catch (err) {
-    res.json({ ok: false, error: '삭제 실패' });
+    res.json({ ok: false });
   }
 });
 
-//------------------------------------------------------------
-//  API: 메시지 목록 / 전송
-//------------------------------------------------------------
 app.get('/api/rooms/:id/messages', async (req, res) => {
   const roomId = req.params.id;
   try {
@@ -219,7 +190,9 @@ app.get('/api/rooms/:id/messages', async (req, res) => {
       'SELECT * FROM messages WHERE room_id = $1 ORDER BY ts ASC',
       [roomId]
     );
-    res.json({ ok: true, messages: result.rows });
+    // ★ 여기서 시간 변환 적용
+    const messages = result.rows.map(msg => fixTime(msg));
+    res.json({ ok: true, messages });
   } catch (err) {
     res.json({ ok: false, messages: [] });
   }
@@ -236,14 +209,15 @@ app.post('/api/rooms/:id/messages', upload.single('image'), async (req, res) => 
   const ts = Date.now();
 
   try {
-    // "user"는 Postgres 예약어일 수 있으므로 따옴표 처리
     const result = await pool.query(
       `INSERT INTO messages (room_id, "user", text, image, ts, read_by) 
        VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
       [roomId, user, text, image, ts, '[]']
     );
 
-    const msg = result.rows[0];
+    // ★ 여기서도 시간 변환 적용
+    const msg = fixTime(result.rows[0]);
+    
     io.to(roomId).emit('new_message', { roomId, message: msg });
     res.json({ ok: true });
   } catch (err) {
@@ -252,23 +226,16 @@ app.post('/api/rooms/:id/messages', upload.single('image'), async (req, res) => 
   }
 });
 
-//------------------------------------------------------------
-//  Socket.IO
-//------------------------------------------------------------
 io.on('connection', (socket) => {
   socket.on('join_room', (roomId) => {
     socket.join(roomId);
   });
 });
 
-// SPA 라우팅 지원 (맨 아래)
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-//------------------------------------------------------------
-//  서버 시작
-//------------------------------------------------------------
 server.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
