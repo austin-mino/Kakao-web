@@ -356,3 +356,74 @@ html.dark .logo {
 html.dark .logo {
   box-shadow: 0 0 0 2px #fff;
 }
+
+/* ========================================= */
+/* 👇 여기서부터 모바일(폰) 전용 설정 추가 👇 */
+/* ========================================= */
+
+/* 1. 기본 뼈대 보강 (폰에서 스크롤 꼬임 방지) */
+body {
+  overscroll-behavior: none; /* 폰에서 화면 당겨지는 효과 끄기 */
+}
+
+#app {
+  position: relative; /* 모바일 화면 겹치기를 위해 필수 */
+  width: 100%;
+}
+
+/* 2. 화면이 좁을 때(폰) 적용되는 규칙 */
+@media screen and (max-width: 768px) {
+  
+  /* 사이드바를 전체 화면으로 키우고, 필요할 때만 보여줌 */
+  #sidebar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10;
+    border-right: none;
+    background: #f9f9f9;
+    transition: transform 0.3s ease;
+  }
+
+  /* 채팅방도 전체 화면으로 키움 */
+  #main {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 5;
+  }
+  
+  /* 채팅방 숨김 처리 (목록만 보일 때) */
+  #main.hidden {
+    display: none; /* 화면에서 아예 안 보이게 함 */
+  }
+  
+  /* 사이드바 숨김 처리 (채팅방 들어갔을 때) */
+  #sidebar.hidden {
+    display: none;
+  }
+
+  /* 입력창과 버튼 터치하기 편하게 키우기 */
+  .panel input, .panel button, 
+  #compose textarea, #compose button {
+    font-size: 16px; 
+    padding: 14px;
+  }
+  
+  /* 채팅방 상단에 뒤로가기 화살표 공간 확보 */
+  #chatHeader {
+    padding-left: 10px;
+  }
+  
+  /* 방 이름 앞에 '←' 화살표 가짜로 만들기 (눌러도 반응은 JS가 해야 함) */
+  #roomName::before {
+    content: "← ";
+    font-size: 20px;
+    margin-right: 8px;
+    cursor: pointer;
+  }
+}
