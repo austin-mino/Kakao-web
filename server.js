@@ -32,7 +32,7 @@ const UPLOAD_DIR = path.join(__dirname, 'uploads');
 if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR);
 
 //------------------------------------------------------------
-//  Multer
+//  Multer (이미지 업로드 설정)
 //------------------------------------------------------------
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, UPLOAD_DIR),
@@ -90,6 +90,8 @@ const io = new Server(server, { cors: { origin: '*' } });
 app.use(cors());
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, 'public')));
+
+// ★ [핵심] 이미지를 보여주기 위한 경로 설정
 app.use('/api/image', express.static(UPLOAD_DIR));
 
 //------------------------------------------------------------
@@ -103,10 +105,10 @@ const verifyToken = (req) => {
   try { return jwt.verify(token, JWT_SECRET); } catch (e) { return null; }
 };
 
-// ★ [중요] 시간을 강제로 숫자로 바꾸는 함수
+// Postgres의 BIGINT는 문자열로 반환되므로 숫자로 변환
 const fixTime = (obj) => {
   if (obj && obj.ts) {
-    obj.ts = parseInt(obj.ts); // 문자를 숫자로 변환
+    obj.ts = parseInt(obj.ts); 
   }
   return obj;
 };
@@ -114,6 +116,8 @@ const fixTime = (obj) => {
 //------------------------------------------------------------
 //  API Routes
 //------------------------------------------------------------
+
+// 1. 회원가입
 app.post('/api/register', async (req, res) => {
   const { username, password } = req.body;
   if (!username || !password) return res.json({ ok: false, error: '정보 부족' });
@@ -130,6 +134,7 @@ app.post('/api/register', async (req, res) => {
   }
 });
 
+// 2. 로그인
 app.post('/api/login', async (req, res) => {
   const { username, password } = req.body;
   try {
@@ -147,6 +152,7 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
+// 3. 방 목록 가져오기
 app.get('/api/rooms', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM rooms ORDER BY id DESC');
@@ -156,6 +162,7 @@ app.get('/api/rooms', async (req, res) => {
   }
 });
 
+// 4. 방 만들기
 app.post('/api/rooms', async (req, res) => {
   const { name } = req.body;
   if (!name) return;
@@ -171,18 +178,24 @@ app.post('/api/rooms', async (req, res) => {
   }
 });
 
+// 5. 방 삭제 (여기가 중요 수정됨!)
 app.delete('/api/rooms/:id', async (req, res) => {
   const roomId = req.params.id;
   try {
     await pool.query('DELETE FROM messages WHERE room_id = $1', [roomId]);
     await pool.query('DELETE FROM rooms WHERE id = $1', [roomId]);
-    io.emit('room_deleted', { roomId });
+    
+    // ★ [수정됨] 객체 { roomId } 가 아니라 그냥 값 roomId만 보냅니다.
+    // 그래야 프론트엔드에서 받아서 바로 처리하기 쉽습니다.
+    io.emit('room_deleted', roomId);
+    
     res.json({ ok: true });
   } catch (err) {
     res.json({ ok: false });
   }
 });
 
+// 6. 특정 방의 메시지 불러오기
 app.get('/api/rooms/:id/messages', async (req, res) => {
   const roomId = req.params.id;
   try {
@@ -190,7 +203,6 @@ app.get('/api/rooms/:id/messages', async (req, res) => {
       'SELECT * FROM messages WHERE room_id = $1 ORDER BY ts ASC',
       [roomId]
     );
-    // ★ 여기서 시간 변환 적용
     const messages = result.rows.map(msg => fixTime(msg));
     res.json({ ok: true, messages });
   } catch (err) {
@@ -198,6 +210,7 @@ app.get('/api/rooms/:id/messages', async (req, res) => {
   }
 });
 
+// 7. 메시지 전송 (이미지 포함)
 app.post('/api/rooms/:id/messages', upload.single('image'), async (req, res) => {
   const payload = verifyToken(req);
   if (!payload) return res.status(401).json({ ok: false, error: 'Unauthorized' });
@@ -215,10 +228,10 @@ app.post('/api/rooms/:id/messages', upload.single('image'), async (req, res) => 
       [roomId, user, text, image, ts, '[]']
     );
 
-    // ★ 여기서도 시간 변환 적용
     const msg = fixTime(result.rows[0]);
     
-    io.to(roomId).emit('new_message', { roomId, message: msg });
+    // ★ 안전하게 문자열로 변환하여 전송
+    io.to(String(roomId)).emit('new_message', { roomId, message: msg });
     res.json({ ok: true });
   } catch (err) {
     console.error(err);
@@ -226,16 +239,24 @@ app.post('/api/rooms/:id/messages', upload.single('image'), async (req, res) => 
   }
 });
 
+//------------------------------------------------------------
+//  Socket Connection
+//------------------------------------------------------------
 io.on('connection', (socket) => {
   socket.on('join_room', (roomId) => {
-    socket.join(roomId);
+    // 숫자/문자 혼동 방지를 위해 문자열로 통일
+    socket.join(String(roomId));
   });
 });
 
+// 프론트엔드 라우팅 처리 (새로고침 시 404 방지)
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+//------------------------------------------------------------
+//  Start Server
+//------------------------------------------------------------
 server.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
