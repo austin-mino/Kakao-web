@@ -167,6 +167,9 @@ async function loadRooms() {
   }
 
   res.rooms.forEach(r => {
+    // 중복 방지 (소켓으로 이미 추가됐을 수도 있으므로)
+    if (document.querySelector(`.roomItem[data-id="${r.id}"]`)) return;
+
     const item = document.createElement("div");
     item.className = "roomItem";
     item.dataset.id = r.id;
@@ -284,8 +287,12 @@ if (newRoomBtn) {
       body: JSON.stringify({ name })
     });
 
-    if (res.ok) loadRooms();
-    else alert(res.error || "실패");
+    if (res.ok) {
+        // ★ [수정] loadRooms() 삭제함.
+        // 서버에서 'new_room' 소켓을 보내주면 그걸 받아서 그리기 때문.
+    } else {
+      alert(res.error || "실패");
+    }
   };
 }
 
@@ -382,7 +389,7 @@ socket.on("new_message", ({ roomId, message }) => {
   }
 });
 
-// 2. [추가됨] 방 삭제 알림 수신 (실시간 동기화)
+// 2. 방 삭제 알림 수신 (실시간 동기화)
 socket.on('room_deleted', (deletedRoomId) => {
   // 방 목록에서 해당 방 제거
   const roomElement = document.querySelector(`.roomItem[data-id="${deletedRoomId}"]`);
@@ -407,6 +414,30 @@ socket.on('room_deleted', (deletedRoomId) => {
     }
   }
 });
+
+// 3. [★ 추가됨] 새 방 생성 알림 (다른 사람이 만들어도 내 목록에 뜸)
+socket.on('new_room', (r) => {
+  // 이미 내 목록에 있다면 무시
+  const exists = document.querySelector(`.roomItem[data-id="${r.id}"]`);
+  if (exists) return;
+
+  const item = document.createElement("div");
+  item.className = "roomItem";
+  item.dataset.id = r.id;
+  item.dataset.name = r.name;
+
+  item.innerHTML = `
+    <div style="flex:1;">
+      <div class="name">${escapeHtml(r.name)}</div>
+      <div class="meta">#${r.id}</div>
+    </div>
+    <button class="btn-delete" style="background:none; border:none; cursor:pointer; font-size:16px; color:#999;" title="방 삭제">✕</button>
+  `;
+
+  // 목록의 맨 위에 추가 (prepend)
+  if (roomsList) roomsList.prepend(item);
+});
+
 
 if (darkToggle) darkToggle.onclick = () => document.documentElement.classList.toggle("dark");
 
