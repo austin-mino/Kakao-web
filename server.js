@@ -162,7 +162,7 @@ app.get('/api/rooms', async (req, res) => {
   }
 });
 
-// 4. 방 만들기
+// 4. 방 만들기 (★ 여기가 수정됨: 실시간 알림 추가)
 app.post('/api/rooms', async (req, res) => {
   const { name } = req.body;
   if (!name) return;
@@ -172,21 +172,26 @@ app.post('/api/rooms', async (req, res) => {
       'INSERT INTO rooms (name, created_at) VALUES ($1, $2) RETURNING *',
       [name, now]
     );
-    res.json({ ok: true, room: result.rows[0] });
+    
+    const newRoom = result.rows[0];
+
+    // ★ [추가된 코드] 모든 사람에게 "새 방이 생겼다"고 알림
+    io.emit('new_room', newRoom);
+
+    res.json({ ok: true, room: newRoom });
   } catch (err) {
     res.json({ ok: false, error: '생성 실패' });
   }
 });
 
-// 5. 방 삭제 (여기가 중요 수정됨!)
+// 5. 방 삭제
 app.delete('/api/rooms/:id', async (req, res) => {
   const roomId = req.params.id;
   try {
     await pool.query('DELETE FROM messages WHERE room_id = $1', [roomId]);
     await pool.query('DELETE FROM rooms WHERE id = $1', [roomId]);
     
-    // ★ [수정됨] 객체 { roomId } 가 아니라 그냥 값 roomId만 보냅니다.
-    // 그래야 프론트엔드에서 받아서 바로 처리하기 쉽습니다.
+    // 삭제된 방 알림 (객체가 아닌 값만 전송)
     io.emit('room_deleted', roomId);
     
     res.json({ ok: true });
@@ -230,7 +235,7 @@ app.post('/api/rooms/:id/messages', upload.single('image'), async (req, res) => 
 
     const msg = fixTime(result.rows[0]);
     
-    // ★ 안전하게 문자열로 변환하여 전송
+    // 안전하게 문자열로 변환하여 전송
     io.to(String(roomId)).emit('new_message', { roomId, message: msg });
     res.json({ ok: true });
   } catch (err) {
@@ -265,7 +270,7 @@ server.listen(PORT, () => {
 //  [추가 기능] 오래된 데이터 자동 청소 (Auto Cleanup)
 //------------------------------------------------------------
 
-// 설정: 며칠 지난 데이터를 지울까요? (여기선 3일로 설정)
+// 설정: 0.5일 = 12시간
 const RETENTION_DAYS = 0.5; 
 const CLEANUP_INTERVAL = 1000 * 60 * 60; // 1시간마다 검사
 
@@ -273,7 +278,7 @@ async function autoCleanup() {
   console.log('🧹 자동 청소 시작: 오래된 데이터 확인 중...');
   
   try {
-    // 1. 기준 시간 계산 (현재 시간 - 3일)
+    // 1. 기준 시간 계산 (현재 시간 - 12시간)
     const cutoffTime = Date.now() - (RETENTION_DAYS * 24 * 60 * 60 * 1000);
 
     // 2. 삭제될 메시지 중 '이미지 파일'이 있는지 먼저 조회
