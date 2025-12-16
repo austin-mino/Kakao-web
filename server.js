@@ -260,3 +260,64 @@ app.get('*', (req, res) => {
 server.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
+
+//------------------------------------------------------------
+//  [추가 기능] 오래된 데이터 자동 청소 (Auto Cleanup)
+//------------------------------------------------------------
+
+// 설정: 며칠 지난 데이터를 지울까요? (여기선 3일로 설정)
+const RETENTION_DAYS = 0.5; 
+const CLEANUP_INTERVAL = 1000 * 60 * 60; // 1시간마다 검사
+
+async function autoCleanup() {
+  console.log('🧹 자동 청소 시작: 오래된 데이터 확인 중...');
+  
+  try {
+    // 1. 기준 시간 계산 (현재 시간 - 3일)
+    const cutoffTime = Date.now() - (RETENTION_DAYS * 24 * 60 * 60 * 1000);
+
+    // 2. 삭제될 메시지 중 '이미지 파일'이 있는지 먼저 조회
+    // (DB만 지우고 파일은 남겨두면 "좀비 파일"이 되어 용량을 차지하니까요)
+    const oldFilesResult = await pool.query(
+      'SELECT image FROM messages WHERE ts < $1 AND image IS NOT NULL', 
+      [cutoffTime]
+    );
+
+    // 3. 실제 폴더(uploads)에서 파일 삭제
+    if (oldFilesResult.rows.length > 0) {
+      const fsPromises = require('fs').promises;
+      let deletedCount = 0;
+
+      for (const row of oldFilesResult.rows) {
+        if (row.image) {
+          const filePath = path.join(UPLOAD_DIR, row.image);
+          try {
+            await fsPromises.unlink(filePath); // 파일 삭제
+            deletedCount++;
+          } catch (err) {
+            // 파일이 이미 없거나 에러나면 그냥 넘어감 (무시)
+          }
+        }
+      }
+      console.log(`🗑️ 이미지 파일 ${deletedCount}개 삭제 완료`);
+    }
+
+    // 4. DB에서 메시지 삭제
+    const dbResult = await pool.query('DELETE FROM messages WHERE ts < $1', [cutoffTime]);
+    
+    if (dbResult.rowCount > 0) {
+      console.log(`✨ DB 메시지 ${dbResult.rowCount}개 삭제 완료 (오래된 데이터)`);
+    } else {
+      console.log('✨ 삭제할 오래된 데이터가 없습니다.');
+    }
+
+  } catch (err) {
+    console.error('❌ 자동 청소 중 오류 발생:', err);
+  }
+}
+
+// 서버가 켜지면 1번 바로 실행하고,
+autoCleanup();
+
+// 그 뒤로는 1시간마다 계속 실행 (setInterval)
+setInterval(autoCleanup, CLEANUP_INTERVAL);
