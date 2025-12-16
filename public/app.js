@@ -385,3 +385,40 @@ function scrollBottom() {
     messagesEl.scrollTop = messagesEl.scrollHeight;
   }, 0);
 }
+
+/* [이미지 미리보기 기능] - app.js 맨 아래에 추가하세요 */
+
+const imgInput = document.getElementById('imageInput');
+const composeBox = document.getElementById('compose');
+
+if (imgInput) {
+  imgInput.addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    
+    // 기존에 떠있는 미리보기가 있다면 지우기
+    const oldPreview = document.getElementById('my-img-preview');
+    if (oldPreview) oldPreview.remove();
+
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        // 미리보기 박스 만들기
+        const div = document.createElement('div');
+        div.id = 'my-img-preview';
+        div.style.cssText = "padding: 10px; background: #f4f4f4; border-top: 1px solid #ddd; display: flex; align-items: center; justify-content: space-between;";
+        
+        div.innerHTML = `
+          <div style="display:flex; align-items:center; gap:10px;">
+            <span style="font-size:12px; color:#666;">첨부됨:</span>
+            <img src="${evt.target.result}" style="height:50px; border-radius:4px; border:1px solid #ccc;">
+          </div>
+          <button onclick="document.getElementById('imageInput').value=''; this.parentNode.remove();" style="border:none; background:none; cursor:pointer; font-size:14px;">✕</button>
+        `;
+
+        // 입력창(compose)의 맨 앞에 끼워넣기
+        composeBox.insertBefore(div, composeBox.firstChild);
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+}
