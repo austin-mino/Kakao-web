@@ -200,15 +200,18 @@ if (roomsList) {
         headers: { "Authorization": "Bearer " + token }
       });
 
+      // 여기서는 성공 여부만 확인 (실제 UI 삭제는 socket.on('room_deleted')가 처리해줄 수도 있지만, 
+      // 내가 삭제한 건 즉시 반영하는게 UX상 좋음)
       if (res.ok || res.status === 200) {
-        loadRooms();
+        // 내가 삭제했을 때도 목록 다시 로드
+        loadRooms(); 
+        
+        // 만약 내가 그 방에 있었다면 나가기
         if (currentRoom == roomId) {
-          // 삭제된 방에 있었다면 나가기
           chatHeader.classList.add("hidden");
           compose.classList.add("hidden");
           messagesEl.innerHTML = "";
           currentRoom = null;
-          // ★ [수정] 모바일이면 목록으로 돌아오기
           if (window.innerWidth <= 768) {
              if(sidebar) sidebar.classList.remove('hidden');
              if(main) main.classList.add('hidden');
@@ -328,6 +331,11 @@ async function sendMessage() {
   
   textInput.value = "";
   imageInput.value = "";
+  
+  // 미리보기 삭제 (전송 후)
+  const preview = document.getElementById('my-img-preview');
+  if(preview) preview.remove();
+
   resizeTextarea();
   textInput.focus();
 
@@ -364,10 +372,39 @@ function resizeTextarea() {
   textInput.style.height = (textInput.scrollHeight) + "px";
 }
 
+/* ------------------------- 소켓 이벤트 (실시간) ------------------------- */
+
+// 1. 새 메시지 수신
 socket.on("new_message", ({ roomId, message }) => {
   if (roomId == currentRoom) {
     renderMessage(message);
     scrollBottom();
+  }
+});
+
+// 2. [추가됨] 방 삭제 알림 수신 (실시간 동기화)
+socket.on('room_deleted', (deletedRoomId) => {
+  // 방 목록에서 해당 방 제거
+  const roomElement = document.querySelector(`.roomItem[data-id="${deletedRoomId}"]`);
+  if (roomElement) {
+    roomElement.remove();
+  }
+
+  // 만약 내가 보고 있던 방이 삭제되었다면?
+  if (currentRoom == deletedRoomId) {
+    alert("현재 채팅방이 삭제되었습니다.");
+    
+    // UI 초기화 (방 나가기)
+    chatHeader.classList.add('hidden');
+    compose.classList.add('hidden');
+    messagesEl.innerHTML = "";
+    currentRoom = null;
+
+    // 모바일이면 목록으로 복귀
+    if (window.innerWidth <= 768) {
+       sidebar.classList.remove('hidden');
+       main.classList.add('hidden');
+    }
   }
 });
 
@@ -386,8 +423,7 @@ function scrollBottom() {
   }, 0);
 }
 
-/* [이미지 미리보기 기능] - app.js 맨 아래에 추가하세요 */
-
+/* [이미지 미리보기 기능] */
 const imgInput = document.getElementById('imageInput');
 const composeBox = document.getElementById('compose');
 
